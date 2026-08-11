@@ -27,4 +27,18 @@ describe("interpretTranscript", () => {
       { ref: "1", task: { dueDate: "tomorrow", title: "Buy milk" }, type: "create" },
     ]);
   });
+
+  it("splits a comma-separated thought dump into separate task operations", () => {
+    expect(interpretTranscript("Call Raju at 5 PM, buy groceries while coming home, and book tennis for this weekend.")).toEqual([
+      { ref: "1", task: { dueTime: "5 PM", title: "Call Raju" }, type: "create" },
+      { ref: "2", task: { title: "buy groceries while coming home" }, type: "create" },
+      { ref: "3", task: { title: "book tennis for this weekend" }, type: "create" },
+    ]);
+  });
+
+  it("resolves a replacement against a current session task title", () => {
+    expect(interpretTranscript("Okay, replace Raju with Rakesh.", 2, [{ reference: "1", title: "Call Raju" }])).toEqual([
+      { patch: { title: "Rakesh" }, ref: "1", type: "update" },
+    ]);
+  });
 });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { sessionOperationsSchema, type SessionOperation } from "@/src/domain/sessionOperations";
+import { interpretTranscript } from "@/src/domain/transcriptInterpreter";
 
 import { TranscriptionError, type SessionContext } from "./contracts";
 import { getSarvamApiKey } from "./env";
@@ -71,7 +72,8 @@ export function createSarvamOperationInterpreter(
       const operations = Array.isArray(content.operations)
         ? content.operations.map(normalizeOperation)
         : content.operations;
-      return sessionOperationsSchema.parse(operations ?? []);
+      const validated = sessionOperationsSchema.parse(operations ?? []);
+      return validated.length > 0 ? validated : fallbackOperations(input);
     } catch {
       throw new TranscriptionError("transcription_failed", "Crisp could not safely interpret that spoken thought.");
     }
@@ -88,6 +90,7 @@ Today is ${isoDate(now)}. Existing draft tasks, and only those tasks, may be upd
 
 Rules:
 - Make one create operation for every distinct task, even when several are spoken in one breath.
+- A non-empty task-like thought must produce an operation. Never return an empty array merely because wording is incomplete, informal, or grammatically imperfect.
 - A correction such as “replace Raju with Rakesh” updates the referenced or clearly matching existing draft task; never create a duplicate.
 - Keep a created task's title in the original language and script from the original transcript. Do not translate it to English.
 - Use the English meaning only for intent, dates, times, and resolving corrections.
@@ -97,6 +100,39 @@ Rules:
 - Exact update shape: {"type":"update","ref":"1","patch":{"title":"Call Rakesh"}}.
 - Output an empty array for filler or acknowledgement only.
 - Use dueDate as today, tomorrow, weekday name, or YYYY-MM-DD; dueTime as 3 PM or 15:00. Do not invent details.`;
+}
+
+/**
+ * Sarvam's task interpreter is the primary path. This narrow fallback prevents
+ * a successful transcription from becoming an invisible no-op when the model
+ * returns an empty array for a plainly task-like utterance. Its output goes
+ * through the same Zod schema as model output and is still applied only by the
+ * client-side session reducer.
+ */
+function fallbackOperations(input: {
+  context: SessionContext;
+  originalTranscript: string;
+}): SessionOperation[] {
+  const transcript = input.originalTranscript.trim();
+  if (!transcript || isAcknowledgement(transcript)) return [];
+
+  try {
+    return interpretTranscript(transcript, nextReference(input.context), input.context.draftTasks);
+  } catch {
+    return [];
+  }
+}
+
+function isAcknowledgement(transcript: string) {
+  return /^(?:ok(?:ay)?|yeah|yes|no|hmm|um|uh|thanks?|thank you|that(?:'s| is) all|that(?:'s| is) it|done|stop|finish|end)[.!\s]*$/i.test(transcript);
+}
+
+function nextReference(context: SessionContext) {
+  const largest = context.draftTasks.reduce((maximum, task) => {
+    const reference = Number(task.reference);
+    return Number.isSafeInteger(reference) && reference > maximum ? reference : maximum;
+  }, 0);
+  return largest + 1;
 }
 
 /** Accept a narrowly known legacy model spelling, then validate the canonical form. */

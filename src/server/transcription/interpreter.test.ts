@@ -46,4 +46,36 @@ describe("Sarvam operation interpreter", () => {
       { ref: "1", task: { dueTime: "15:00", title: "Call Raju" }, type: "create" },
     ]);
   });
+
+  it("creates safe fallback operations when Sarvam returns an empty list for spoken tasks", async () => {
+    const fetcher = jest.fn(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ operations: [] }) } }],
+    }), { status: 200 }));
+    const interpret = createSarvamOperationInterpreter(fetcher as unknown as typeof fetch, () => "server-secret");
+
+    await expect(interpret({
+      context: { draftTasks: [] },
+      now: new Date("2026-08-11T00:00:00.000Z"),
+      originalTranscript: "Call Raju at 5 PM, buy groceries, book tennis for this weekend.",
+      translatedTranscript: "Call Raju at 5 PM, buy groceries, book tennis for this weekend.",
+    })).resolves.toEqual([
+      { ref: "1", task: { dueTime: "5 PM", title: "Call Raju" }, type: "create" },
+      { ref: "2", task: { title: "buy groceries" }, type: "create" },
+      { ref: "3", task: { title: "book tennis for this weekend" }, type: "create" },
+    ]);
+  });
+
+  it("keeps empty output for a bare acknowledgement", async () => {
+    const fetcher = jest.fn(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ operations: [] }) } }],
+    }), { status: 200 }));
+    const interpret = createSarvamOperationInterpreter(fetcher as unknown as typeof fetch, () => "server-secret");
+
+    await expect(interpret({
+      context: { draftTasks: [] },
+      now: new Date("2026-08-11T00:00:00.000Z"),
+      originalTranscript: "Okay.",
+      translatedTranscript: "Okay.",
+    })).resolves.toEqual([]);
+  });
 });

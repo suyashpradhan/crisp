@@ -13,16 +13,28 @@ const timePattern = "(?:[01]?\\d|2[0-3])(?::[0-5]\\d)?(?:\\s?(?:am|pm))?";
 
 export class TranscriptInterpretationError extends Error {}
 
+type DraftTaskReference = {
+  reference: string;
+  title: string;
+};
+
+const taskStarterPattern = "call|buy|get|book|schedule|send|email|message|reply|pay|pick(?:\\s+up)?|bring|remind|plan|finish|prepare|review|update|check|order|meet|write|submit|make";
+const taskBoundaryPattern = new RegExp(
+  `(?:[,;]\\s*(?:(?:and|then|also)\\s+)?|\\b(?:and|then|also)\\s+)(?=(?:please\\s+)?(?:${taskStarterPattern})\\b)`,
+  "i",
+);
+
 /**
  * A deliberately narrow V0 interpreter for direct task phrases. Its output still goes
  * through Zod before it can reach the session reducer, so a future model adapter can
  * replace this function without changing the safety boundary.
  */
-export function interpretTranscript(transcript: string, firstReference = 1): SessionOperation[] {
-  const utterances = transcript
-    .split(/[.!?\n]+/)
-    .map((utterance) => utterance.trim())
-    .filter(Boolean);
+export function interpretTranscript(
+  transcript: string,
+  firstReference = 1,
+  draftTasks: readonly DraftTaskReference[] = [],
+): SessionOperation[] {
+  const utterances = splitTaskPhrases(transcript);
   const operations: unknown[] = [];
   let nextReference = firstReference;
 
@@ -43,13 +55,23 @@ export function interpretTranscript(transcript: string, firstReference = 1): Ses
 
     const deletion = normalized.match(/^(?:delete|remove) (?:the )?(.+?)(?: (?:one|item|task))?$/);
     if (deletion) {
-      operations.push({ ref: referenceFor(deletion[1]!), type: "delete" });
+      operations.push({ ref: referenceFor(deletion[1]!, draftTasks), type: "delete" });
+      continue;
+    }
+
+    const replacement = utterance.match(/^(?:ok(?:ay)?[,.\s]+)?replace\s+(?:the\s+)?(.+?)\s+with\s+(.+)$/i);
+    if (replacement) {
+      operations.push({
+        patch: { title: replacement[2]!.trim() },
+        ref: referenceFor(replacement[1]!, draftTasks),
+        type: "update",
+      });
       continue;
     }
 
     const update = normalized.match(/^(?:make|change|move|set) (?:the )?(.+?)(?: (?:one|item|task))? (?:to |at )?(.+)$/);
     if (update) {
-      operations.push({ patch: patchFor(update[2]!), ref: referenceFor(update[1]!), type: "update" });
+      operations.push({ patch: patchFor(update[2]!), ref: referenceFor(update[1]!, draftTasks), type: "update" });
       continue;
     }
 
@@ -64,9 +86,23 @@ export function interpretTranscript(transcript: string, firstReference = 1): Ses
   return parseSessionOperations(operations);
 }
 
-function referenceFor(value: string): string {
+function splitTaskPhrases(transcript: string) {
+  return transcript
+    .split(/[.!?\n]+/)
+    .flatMap((sentence) => sentence.split(taskBoundaryPattern))
+    .map((utterance) => utterance.trim())
+    .filter(Boolean);
+}
+
+function referenceFor(value: string, draftTasks: readonly DraftTaskReference[]): string {
   const normalized = value.trim().toLowerCase();
-  return ordinalReferences[normalized] ?? normalized.replace(/^number\s+/, "");
+  const ordinal = ordinalReferences[normalized] ?? normalized.replace(/^number\s+/, "");
+  if (ordinal !== normalized || /^\d+$/.test(ordinal)) return ordinal;
+  const matchingTask = draftTasks.find((task) => {
+    const title = task.title.trim().toLowerCase();
+    return title === normalized || title.includes(normalized);
+  });
+  return matchingTask?.reference ?? ordinal;
 }
 
 function patchFor(value: string): { dueDate?: string; dueTime?: string; title?: string } {
