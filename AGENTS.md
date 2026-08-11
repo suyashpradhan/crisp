@@ -6,11 +6,11 @@ Crisp is a voice-first personal task app: tap once, speak naturally, adjust task
 
 ## Sources of truth
 
-Read existing code and these documents before editing. The authoritative visual specifications currently live in `design/`: `DESIGN_HANDOFF.md`, `MOTION_SPEC.md`, `RESPONSIVE_SPEC.md`, and `ASSET_MANIFEST.md`. The matching `.dc.html` exports in `references/` are visual references. `docs/PRODUCT_SPEC.md` owns behavior and scope; `docs/ROADMAP.md` owns delivery sequencing; `BACKLOG.md` owns deferred ideas. Do not redesign or duplicate detailed visual tokens outside `design/`.
+Read existing code and these documents before editing. `docs/PRODUCT_SPEC.md` owns behavior and interaction; it supersedes the earlier Dusk recording transition. The visual specifications in `design/` (`DESIGN_HANDOFF.md`, `MOTION_SPEC.md`, `RESPONSIVE_SPEC.md`, and `ASSET_MANIFEST.md`) and matching `.dc.html` files in `references/` remain the source for the Crisp visual language where they do not conflict. `docs/ROADMAP.md` owns delivery sequencing; `BACKLOG.md` owns deferred ideas. Do not copy another product’s visual assets, copy, or implementation.
 
 ## Product and platform rules
 
-Ship one Expo + React Native + TypeScript application with Expo Router and React Native Web. iOS, Android, and web share product behavior and component architecture; platform code is only for low-level concerns such as audio, permissions, safe areas, hover, files, and haptics. Recording state—not a user preference—selects the light or Dusk environment.
+Ship one Expo + React Native + TypeScript application with Expo Router and React Native Web. iOS, Android, and web share product behavior and component architecture; platform code is only for low-level concerns such as audio, permissions, safe areas, hover, files, and haptics. Recording is an in-place state of the persistent task workspace: navigation stays visible, the bottom recorder gains a real audio meter, and floating zigzag temporary cards appear at the top of the current task area. It must not route to a separate screen or turn dark. A tap begins a session; natural pauses create temporary cards and 30 seconds of quiet commits it. Do not reintroduce a required Finish button or spoken end phrase.
 
 Voice commands may create, update, delete, clear, or undo **only active-session draft tasks**. Permanent tasks are never voice-mutated in V1. Validate AI-produced `SessionOperation` data with Zod, then apply it through a deterministic reducer; an AI model must never mutate persisted task state directly. Never expose Sarvam credentials in a client.
 

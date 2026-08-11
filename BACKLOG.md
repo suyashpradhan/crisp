@@ -12,7 +12,7 @@ The following ideas are **NOT IN CURRENT BUILD**. They are recorded for future e
 - Projects, labels, priorities, subtasks, or collaboration
 - Task-manager integrations
 - Persistent voice history
-- Additional Indian languages beyond the planned Hinglish evaluation
+- Languages beyond the Sarvam Saaras v3 supported set, or language-specific UX beyond source-language transcription
 
 ## Business and expansion ideas
 

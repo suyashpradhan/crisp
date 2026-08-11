@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, fontFamily } from "@/src/design/tokens";
+import { formatTaskMetadata } from "@/src/domain/taskPresentation";
 import type { Task } from "@/src/domain/types";
 
 type TaskRowProps = {
@@ -13,7 +14,7 @@ type TaskRowProps = {
 
 export function TaskRow({ onOpen, onToggle, recessed, task, web }: TaskRowProps) {
   const completed = task.status === "completed";
-  const metadata = task.dueTime ?? task.dueDate;
+  const metadata = formatTaskMetadata(task);
 
   return (
     <View style={[styles.row, web && styles.webRow, recessed && styles.recessed, completed && styles.completed]}>

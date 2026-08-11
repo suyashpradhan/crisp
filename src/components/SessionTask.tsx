@@ -4,23 +4,21 @@ import { colors, fontFamily } from "@/src/design/tokens";
 import type { SessionTask as SessionTaskModel } from "@/src/domain/types";
 
 type SessionTaskProps = {
-  index: number;
+  count: number;
   task: SessionTaskModel;
   web: boolean;
 };
 
-export function SessionTask({ index, task, web }: SessionTaskProps) {
-  const magnitude = web ? 10 - (index % 3) * 3 : 8 - (index % 3) * 4;
-  const offset = (index % 2 === 0 ? -1 : 1) * magnitude;
+export function SessionTask({ count, task, web }: SessionTaskProps) {
   const metadata = [task.dueDate, task.dueTime].filter(Boolean).join(" · ");
 
   return (
     <View
-      accessibilityLabel={`Item ${task.reference}, ${task.title}${metadata ? `, ${metadata}` : ""}`}
+      accessibilityLabel={`Item ${task.reference} of ${count}, ${task.title}${metadata ? `, ${metadata}` : ""}`}
       style={[
         styles.card,
         web && styles.webCard,
-        { transform: [{ translateX: offset }] },
+        { transform: [{ translateX: 0 }] },
       ]}
     >
       <View style={[styles.reference, web && styles.webReference]}>
@@ -37,8 +35,8 @@ export function SessionTask({ index, task, web }: SessionTaskProps) {
 const styles = StyleSheet.create({
   card: {
     alignItems: "flex-start",
-    backgroundColor: colors.surfaceRaisedRecording,
-    borderColor: colors.borderRecording,
+    backgroundColor: colors.surfaceRaisedLight,
+    borderColor: colors.borderLight,
     borderRadius: 15,
     borderWidth: 1,
     flexDirection: "row",
@@ -49,7 +47,7 @@ const styles = StyleSheet.create({
   },
   copy: { flex: 1, gap: 2 },
   meta: {
-    color: colors.textSecondaryRecording,
+    color: colors.textSecondaryLight,
     fontFamily: fontFamily.sans,
     fontSize: 13,
     letterSpacing: 0.05,
@@ -57,7 +55,7 @@ const styles = StyleSheet.create({
   },
   reference: {
     alignItems: "center",
-    borderColor: colors.borderRecording,
+    borderColor: colors.borderLight,
     borderRadius: 9999,
     borderWidth: 1,
     height: 21,
@@ -66,12 +64,12 @@ const styles = StyleSheet.create({
     width: 21,
   },
   referenceText: {
-    color: colors.textTertiaryRecording,
+    color: colors.textTertiaryLight,
     fontFamily: fontFamily.mono,
     fontSize: 10.5,
   },
   title: {
-    color: colors.textPrimaryRecording,
+    color: colors.textPrimaryLight,
     fontFamily: fontFamily.sans,
     fontSize: 16.5,
     letterSpacing: -0.18,
