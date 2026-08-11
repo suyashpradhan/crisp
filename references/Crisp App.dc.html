@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+  body {
+    margin: 0;
+    background: #EFE9E1;
+    --canvas: #EFE9E1;
+    --bg: #F6F1EA;
+    --surface: #FFFDF9;
+    --ink: #211E1B;
+    --accent: #B24A32;
+    --muted: #766E65;
+    --faint: #A2988C;
+    --line: #DED5CB;
+    --wash: rgba(185, 78, 54, 0.13);
+    --tint: #FCF1EC;
+    --glow: rgba(185, 78, 54, 0.20);
+    --onink: #FDFBF7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: #211E1B; text-decoration: none; }
+  a:hover { color: #766E65; }
+  button { font: inherit; cursor: pointer; }
+  ::selection { background: rgba(59,55,51,.12); }
+  @keyframes crispBreathe { 0%,100% { transform: scale(1); opacity: .30 } 50% { transform: scale(1.11); opacity: .12 } }
+  @keyframes crispRise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+  @keyframes crispCaret { 0%,45% { opacity: 1 } 55%,100% { opacity: .15 } }
+</style>
+</helmet>
+
+<div style="--canvas:{{ th.canvas }}; --bg:{{ th.bg }}; --surface:{{ th.surface }}; --ink:{{ th.ink }}; --accent:{{ th.accent }}; --muted:{{ th.muted }}; --faint:{{ th.faint }}; --line:{{ th.line }}; --onink:{{ th.onink }}; --wash:{{ th.wash }}; --tint:{{ th.tint }}; --glow:{{ th.glow }}; display:flex; min-height:100vh; background:var(--canvas,#EDE8E0); font-family:'Instrument Sans',system-ui,sans-serif; color:var(--ink,#211F1C);">
+
+  <aside style="width:274px; flex:none; padding:26px 20px 34px; border-right:1px solid rgba(0,0,0,.06); display:flex; flex-direction:column; gap:22px; position:sticky; top:0; align-self:flex-start; height:100vh; overflow:auto;">
+    <div style="display:flex; flex-direction:column; gap:3px;">
+      <div style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; letter-spacing:-.01em;">crisp</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint,#B4ABA0);">voice-first tasks · v1</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <button onClick="{{ toggleMic }}" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:11px 13px; border-radius:11px; border:1px solid {{ liveBorder }}; background:{{ liveBg }}; color:{{ liveFg }}; text-align:left; transition:all .2s ease;">
+        <span style="font-size:13.5px; font-weight:500;">{{ liveLabel }}</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; opacity:.62;">{{ liveHint }}</span>
+      </button>
+      <button onClick="{{ runScript }}" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:11px 13px; border-radius:11px; border:1px solid var(--line,#E4DDD3); background:transparent; color:var(--ink,#211F1C); text-align:left;">
+        <span style="font-size:13.5px; font-weight:500;">Play the scripted session</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--faint,#B4ABA0);">6 lines</span>
+      </button>
+      <div style="font-size:11.5px; line-height:1.45; color:var(--faint,#B4ABA0); padding:2px 2px 0;">{{ micNote }}</div>
+    </div>
+
+    <sc-for list="{{ railGroups }}" as="group" hint-placeholder-count="3">
+      <div style="display:flex; flex-direction:column; gap:2px; margin-bottom:16px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint,#B4ABA0); padding:6px 8px 7px;">{{ group.label }}</div>
+        <sc-for list="{{ group.items }}" as="item" hint-placeholder-count="4">
+          <button onClick="{{ item.go }}" style="display:flex; align-items:baseline; gap:9px; width:100%; padding:6.5px 9px; border:none; border-radius:8px; text-align:left; background:{{ item.bg }}; color:{{ item.fg }}; transition:background .15s ease;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; opacity:.45; width:14px; flex:none;">{{ item.num }}</span>
+            <span style="font-size:13.5px; letter-spacing:-.005em; font-weight:{{ item.weight }};">{{ item.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-for>
+
+    <button onClick="{{ toggleTheme }}" style="margin-top:auto; align-self:flex-start; padding:8px 13px; border-radius:999px; border:1px solid var(--line,#E4DDD3); background:transparent; color:var(--muted,#8B8377); font-size:12.5px;">{{ themeLabel }}</button>
+  </aside>
+
+  <main style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; padding:44px 32px 56px; min-width:0;">
+
+    <div style="width:390px; height:844px; flex:none; position:relative; border-radius:46px; background:var(--bg,#F7F4EF); overflow:hidden; box-shadow:0 1px 2px rgba(30,24,16,.06), 0 30px 70px -30px rgba(30,24,16,.34), 0 0 0 1px rgba(30,24,16,.07);">
+
+      <div style="position:absolute; top:0; left:0; right:0; height:58px; display:flex; align-items:center; justify-content:space-between; padding:0 24px; z-index:6;">
+        <div style="font-family:'Instrument Serif',Georgia,serif; font-size:21px; letter-spacing:-.01em; opacity:{{ chromeOpacity }}; transition:opacity .4s ease;">crisp</div>
+        <button onClick="{{ toggleDone }}" style="border:none; background:transparent; padding:6px 0; font-size:13px; color:var(--muted,#8B8377); opacity:{{ chromeOpacity }}; transition:opacity .4s ease;">{{ doneLabel }}</button>
+      </div>
+
+      <div style="position:absolute; top:58px; left:0; right:0; bottom:0; overflow:hidden; padding:6px 24px 0; transform:translateY({{ listY }}px) scale({{ listScale }}); transform-origin:50% 22%; opacity:{{ listOpacity }}; filter:saturate({{ listSat }}); transition:opacity .55s cubic-bezier(.22,.7,.2,1), transform .55s cubic-bezier(.22,.7,.2,1);">
+
+        <sc-if value="{{ showEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="height:520px; display:flex; flex-direction:column; justify-content:center; gap:12px; padding-bottom:60px;">
+            <div style="font-family:'Instrument Serif',Georgia,serif; font-size:37px; line-height:1.06; letter-spacing:-.015em;">Nothing here yet.</div>
+            <div style="font-size:16px; line-height:1.45; color:var(--muted,#8B8377); max-width:250px; text-wrap:pretty;">Tap and say one thing. Or ten.</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+          <div style="height:100%; overflow-y:auto; padding-bottom:210px; -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 14px,#000 74%,transparent 100%);">
+            <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="2">
+              <div style="margin-bottom:26px;">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--faint,#A2988C); margin-bottom:9px;">{{ sec.label }}</div>
+                <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="3">
+                  <div onClick="{{ row.open }}" style="display:flex; align-items:flex-start; gap:13px; padding:11px 0; opacity:{{ row.op }}; transform:translateY({{ row.ty }}px); transition:opacity .5s cubic-bezier(.22,.7,.2,1) {{ row.delay }}, transform .5s cubic-bezier(.22,.7,.2,1) {{ row.delay }};">
+                    <button onClick="{{ row.toggle }}" style="flex:none; width:21px; height:21px; margin-top:2px; border-radius:999px; border:1.4px solid {{ row.ringColor }}; background:{{ row.ringFill }}; display:flex; align-items:center; justify-content:center; padding:0; transition:all .22s ease;">
+                      <span style="width:8px; height:8px; border-radius:999px; background:var(--onink,#F7F4EF); opacity:{{ row.dotOp }}; transform:scale({{ row.dotScale }}); transition:all .22s cubic-bezier(.2,.8,.2,1);"></span>
+                    </button>
+                    <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+                      <div style="font-size:16.5px; letter-spacing:-.011em; line-height:1.28; color:{{ row.titleColor }}; text-decoration:{{ row.strike }}; text-decoration-color:var(--faint,#B4ABA0); transition:color .3s ease;">{{ row.title }}</div>
+                      <div style="font-size:13px; color:var(--faint,#B4ABA0); letter-spacing:.004em; height:{{ row.metaH }}; overflow:hidden;">{{ row.meta }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <sc-if value="{{ showDoneEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:80px 0; text-align:center; font-size:15px; color:var(--faint,#B4ABA0);">Nothing finished yet today.</div>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ showBoard }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; top:52px; left:0; right:0; bottom:196px; overflow:hidden; padding:16px 22px 8px; z-index:4; opacity:{{ boardOp }}; transition:opacity .2s ease .24s;">
+          <div style="height:100%; overflow-y:auto; padding-bottom:20px; -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 16px,#000 82%,transparent 100%);">
+            <sc-for list="{{ temp }}" as="card" hint-placeholder-count="3">
+              <div style="max-height:{{ card.mh }}; margin-bottom:{{ card.mb }}; opacity:{{ card.op }}; transform:translateX({{ card.dx }}px) translateY({{ card.ty }}px) scale({{ card.sc }}); transition:max-height .34s cubic-bezier(.3,.7,.2,1) {{ card.delay }}, margin-bottom .34s cubic-bezier(.3,.7,.2,1) {{ card.delay }}, opacity .3s ease {{ card.delay }}, transform .44s cubic-bezier(.22,.72,.16,1) {{ card.delay }};">
+                <div style="position:relative; display:flex; gap:13px; align-items:flex-start; padding:{{ card.pad }}; border-radius:15px; background:{{ card.bg }}; border:1px solid {{ card.border }}; box-shadow:{{ card.shadow }}; transition:all .42s cubic-bezier(.22,.72,.16,1);">
+                  <div style="flex:none; width:21px; height:21px; margin-top:1px; border-radius:999px; border:1px solid {{ card.numBorder }}; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted,#8B8377); opacity:{{ card.numOp }}; transform:scale({{ card.numScale }}); transition:all .38s cubic-bezier(.22,.72,.16,1);">{{ card.n }}</div>
+                  <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;">
+                    <div style="font-size:16.5px; letter-spacing:-.011em; line-height:1.28;">{{ card.title }}</div>
+                    <div style="position:relative; height:18px;">
+                      <span style="position:absolute; inset:-3px -6px; border-radius:6px; background:var(--wash,rgba(184,118,58,.16)); opacity:{{ card.washOp }}; transition:opacity .7s ease;"></span>
+                      <span style="position:relative; display:block; font-size:13px; color:var(--muted,#8B8377); letter-spacing:.004em; opacity:{{ card.metaOp }}; transform:translateY({{ card.metaY }}px); transition:opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);">{{ card.meta }}</span>
+                      <span style="position:absolute; top:0; left:0; font-size:13px; color:var(--muted,#8B8377); letter-spacing:.004em; opacity:{{ card.oldOp }}; transform:translateY({{ card.oldY }}px); transition:opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);">{{ card.oldMeta }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ boardEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:26px 4px; font-size:14.5px; line-height:1.5; color:var(--faint,#B4ABA0); max-width:250px; animation:crispRise .5s ease both;">{{ boardEmptyLine }}</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="position:absolute; left:0; right:0; bottom:0; padding:0 24px 30px; z-index:8; display:flex; flex-direction:column; align-items:center; gap:14px; background:linear-gradient(180deg, transparent 0%, var(--bg,#F6F1EA) 34%);">
+
+        <div style="position:absolute; left:-18%; right:-18%; bottom:-120px; height:340px; border-radius:50%; background:radial-gradient(ellipse at 50% 68%, var(--glow) 0%, transparent 68%); opacity:{{ ambientOp }}; transition:opacity .7s ease; pointer-events:none;"></div>
+
+        <sc-if value="{{ showFault }}" hint-placeholder-val="{{ false }}">
+          <div style="width:100%; display:flex; gap:11px; align-items:flex-start; padding:14px 15px; border-radius:14px; background:var(--surface,#FFFDFA); border:1px solid var(--line,#E4DDD3); animation:crispRise .4s ease both;">
+            <span style="flex:none; width:7px; height:7px; margin-top:6px; border-radius:999px; background:{{ faultDot }};"></span>
+            <div style="flex:1; display:flex; flex-direction:column; gap:3px;">
+              <div style="font-size:14.5px; letter-spacing:-.008em;">{{ faultTitle }}</div>
+              <div style="font-size:13px; line-height:1.42; color:var(--muted,#8B8377); text-wrap:pretty;">{{ faultBody }}</div>
+            </div>
+            <button onClick="{{ faultAction }}" style="flex:none; align-self:center; padding:7px 13px; border-radius:999px; border:none; background:var(--ink,#211E1B); color:var(--onink,#FDFBF7); font-size:12.5px; font-weight:500;">{{ faultCta }}</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; gap:12px; padding:8px 8px 8px 15px; border-radius:999px; background:var(--ink,#211E1B); color:var(--onink,#FDFBF7); animation:crispRise .32s cubic-bezier(.2,.8,.2,1) both;">
+            <span style="font-size:13.5px; letter-spacing:-.005em;">{{ toastLabel }}</span>
+            <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ undo }}" style="border:none; padding:5px 12px; border-radius:999px; background:rgba(255,255,255,.14); color:var(--onink,#F7F4EF); font-size:13px; font-weight:500;">Undo</button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <div style="height:{{ phraseH }}; width:100%; overflow:hidden; transition:height .3s cubic-bezier(.2,.8,.2,1);">
+          <div style="font-size:15px; line-height:1.4; letter-spacing:-.006em; color:var(--muted,#8B8377); text-align:center; opacity:{{ phraseOp }}; transform:translateY({{ phraseY }}px); transition:opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1); text-wrap:pretty;">{{ phrase }}<span style="display:inline-block; width:1.5px; height:14px; margin-left:3px; vertical-align:-2px; background:var(--faint,#B4ABA0); animation:crispCaret 1.1s steps(1,end) infinite; opacity:{{ caretOp }};"></span></div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:9px; height:17px; opacity:{{ statusOp }}; transition:opacity .35s ease;">
+          <span style="font-size:13px; letter-spacing:-.004em; color:var(--muted,#8B8377);">{{ statusLabel }}</span>
+          <span style="width:3px; height:3px; border-radius:999px; background:var(--faint,#B4ABA0);"></span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; font-variant-numeric:tabular-nums; color:var(--faint,#B4ABA0);">{{ clock }}</span>
+        </div>
+
+        <div style="display:flex; align-items:flex-end; justify-content:center; gap:3.5px; height:21px; opacity:{{ metersOp }}; transition:opacity .45s ease;">
+          <sc-for list="{{ bars }}" as="bar" hint-placeholder-count="8">
+            <span ref="{{ bar.ref }}" style="width:3px; height:3px; border-radius:999px; background:var(--accent,#B24A32); opacity:0;"></span>
+          </sc-for>
+        </div>
+
+        <div style="position:relative; width:132px; height:112px; display:flex; align-items:center; justify-content:center;">
+          <div ref="{{ haloRef }}" style="position:absolute; width:118px; height:118px; border-radius:999px; background:radial-gradient(circle, var(--glow) 26%, transparent 70%); opacity:0; transform:scale(1); pointer-events:none;"></div>
+          <div style="position:absolute; width:92px; height:92px; border-radius:999px; border:1px solid var(--accent,#B24A32); opacity:{{ breathOp }}; animation:{{ breathAnim }}; pointer-events:none;"></div>
+          <button onClick="{{ toggleMic }}" style="position:relative; width:{{ micSize }}; height:{{ micSize }}; border-radius:999px; border:none; padding:0; display:flex; align-items:center; justify-content:center; background:{{ micBg }}; box-shadow:{{ micShadow }}; transform:scale({{ micScale }}); transition:transform .28s cubic-bezier(.2,.8,.2,1), width .3s cubic-bezier(.2,.8,.2,1), height .3s cubic-bezier(.2,.8,.2,1), background .3s ease, box-shadow .3s ease;" style-active="transform:scale(.94)">
+            <span style="position:absolute; inset:1px; border-radius:999px; background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 42%); pointer-events:none;"></span>
+            <span style="position:relative; display:flex; flex-direction:column; align-items:center; gap:3px; opacity:{{ micGlyphOp }}; transform:scale({{ micGlyphScale }}); transition:all .24s cubic-bezier(.2,.8,.2,1);">
+              <span style="width:9px; height:17px; border-radius:5px; background:var(--onink,#F7F4EF);"></span>
+              <span style="width:15px; height:7px; border-bottom:1.6px solid var(--onink,#F7F4EF); border-left:1.6px solid var(--onink,#F7F4EF); border-right:1.6px solid var(--onink,#F7F4EF); border-radius:0 0 9px 9px;"></span>
+            </span>
+            <span style="position:absolute; width:17px; height:17px; border-radius:4px; background:var(--onink,#F7F4EF); opacity:{{ stopGlyphOp }}; transform:scale({{ stopGlyphScale }}); transition:all .24s cubic-bezier(.2,.8,.2,1);"></span>
+          </button>
+        </div>
+
+        <div style="width:118px; height:4px; border-radius:999px; background:var(--ink,#211F1C); opacity:.12;"></div>
+      </div>
+
+      <sc-if value="{{ showEditor }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeEditor }}" style="position:absolute; inset:0; z-index:11; background:rgba(24,20,16,.24);"></div>
+        <div style="position:absolute; left:0; right:0; bottom:0; z-index:12; padding:22px 24px 30px; border-radius:26px 26px 46px 46px; background:var(--surface,#FFFDFA); box-shadow:0 -18px 50px -22px rgba(30,24,16,.34); animation:crispRise .3s cubic-bezier(.2,.8,.2,1) both; display:flex; flex-direction:column; gap:18px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint,#B4ABA0);">Edit task</div>
+            <button onClick="{{ closeEditor }}" style="border:none; background:transparent; font-size:13px; color:var(--muted,#8B8377); padding:2px 0;">Done</button>
+          </div>
+          <input value="{{ editTitle }}" onChange="{{ setEditTitle }}" style="width:100%; box-sizing:border-box; border:none; border-bottom:1px solid var(--line,#E4DDD3); background:transparent; padding:0 0 11px; font-family:'Instrument Sans',sans-serif; font-size:22px; letter-spacing:-.015em; color:var(--ink,#211F1C); outline:none;" />
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <sc-for list="{{ editChips }}" as="chip" hint-placeholder-count="5">
+              <button onClick="{{ chip.pick }}" style="padding:8px 14px; border-radius:999px; border:1px solid {{ chip.border }}; background:{{ chip.bg }}; color:{{ chip.fg }}; font-size:13.5px; transition:all .18s ease;">{{ chip.label }}</button>
+            </sc-for>
+          </div>
+          <button onClick="{{ deleteEditing }}" style="align-self:flex-start; border:none; background:transparent; padding:2px 0; font-size:13.5px; color:var(--muted,#8B8377);">Delete task</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="width:640px; max-width:100%; display:flex; gap:20px; align-items:flex-start;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint,#B4ABA0); padding-top:3px; flex:none; width:64px;">{{ captionNum }}</div>
+      <div style="display:flex; flex-direction:column; gap:5px;">
+        <div style="font-size:15.5px; letter-spacing:-.01em;">{{ captionTitle }}</div>
+        <div style="font-size:13.5px; line-height:1.5; color:var(--muted,#8B8377); text-wrap:pretty;">{{ captionBody }}</div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#B24A32&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#B24A32&quot;,&quot;#B94E36&quot;,&quot;#C0613C&quot;,&quot;#9A5B3D&quot;],&quot;section&quot;:&quot;Identity&quot;},&quot;organicOffset&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:13,&quot;min&quot;:0,&quot;max&quot;:24,&quot;step&quot;:1,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Recording board&quot;}}">
+const LIGHT = { canvas:'#EFE9E1', bg:'#F6F1EA', surface:'#FFFDF9', ink:'#211E1B', accent:'#B24A32', muted:'#766E65', faint:'#A2988C', line:'#DED5CB', onink:'#FDFBF7', wash:'rgba(185,78,54,.13)', tint:'#FCF1EC', glow:'rgba(185,78,54,.20)' };
+const DARK  = { canvas:'#100E0C', bg:'#1A1714', surface:'#221E1A', ink:'#F2EDE5', accent:'#D2634A', muted:'#968C80', faint:'#6E655B', line:'#2E2A25', onink:'#1A1714', wash:'rgba(210,99,74,.20)', tint:'#2A211D', glow:'rgba(210,99,74,.24)' };
+
+const TODAY_SEED = [
+  { title:'Call Rahul', meta:'3:00 PM' },
+  { title:'Buy groceries', meta:'11:00 AM' },
+  { title:'Review pull request', meta:'' }
+];
+const LATER_SEED = [
+  { title:'Send API document to Amit', meta:'Wednesday' },
+  { title:'Book the dentist', meta:'Next week' }
+];
+const DONE_SEED = [
+  { title:'Pay the electricity bill', meta:'8:10 AM' },
+  { title:'Confirm Thursday standup', meta:'Yesterday' }
+];
+const DENSE = ['Call Rahul|3:00 PM','Buy groceries|11:00 AM','Review pull request|','Reply to the client|4:00 PM','Sign the lease addendum|9:30 AM','Water the plants|','Move the standup to 10|10:00 AM','Send Priya the invoice|1:00 PM','Pick up dry cleaning|6:00 PM','Draft the retro notes|','Renew car insurance|2:00 PM','Reply to Meera|'];
+const DENSE_LATER = ['Send API document to Amit|Wednesday','Book the dentist|Next week','Flights for Goa|Friday','Quarterly taxes|Aug 30','Replace the router|Saturday','Call Mum back|Sunday'];
+
+const SCRIPT = [
+  { t: 700,  say:'call Rahul tomorrow at five' },
+  { t: 3200, say:'reply to the client tomorrow at four' },
+  { t: 6100, say:'buy groceries tomorrow at eleven' },
+  { t: 9000, say:'actually change Rahul to three pm' },
+  { t:12200, say:'delete the second one' },
+  { t:15200, say:'add send Amit the API document Wednesday' },
+  { t:18600, stop:true }
+];
+
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+class Component extends DCLogic {
+  state = {
+    theme: 'light',
+    view: 'home',
+    mode: 'idle',
+    tasks: null,
+    temp: [],
+    seq: 0,
+    phrase: '',
+    phraseVisible: false,
+    elapsed: 0,
+    quiet: false,
+    toast: null,
+    fault: null,
+    editing: null,
+    faint: false,
+    editTitle: '',
+    active: 'today',
+    listening: false,
+    committing: false,
+    dense: false
+  };
+
+  componentDidMount() {
+    this.setState({ tasks: this.seed() });
+    this.amp = 0;
+    this.raf = requestAnimationFrame(this.loop);
+    this.hasSR = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+    clearInterval(this.timer);
+    this.clearScript();
+    this.stopAudio();
+    if (this.rec) { try { this.rec.abort(); } catch (e) {} }
+  }
+
+  seed(dense) {
+    const mk = (arr, bucket) => arr.map((r, i) => ({ id:'s'+bucket+i, title:r.title, meta:r.meta, bucket, done:false }));
+    if (dense) {
+      const t = DENSE.map((s,i)=>({ id:'d'+i, title:s.split('|')[0], meta:s.split('|')[1], bucket:'today', done:false }));
+      const l = DENSE_LATER.map((s,i)=>({ id:'dl'+i, title:s.split('|')[0], meta:s.split('|')[1], bucket:'later', done:false }));
+      return t.concat(l, mk(DONE_SEED,'today').map(x=>({ ...x, id:'dn'+x.id, done:true })));
+    }
+    return mk(TODAY_SEED,'today').concat(mk(LATER_SEED,'later'), mk(DONE_SEED,'today').map(x=>({ ...x, id:'dn'+x.id, done:true })));
+  }
+
+  /* ---------- audio + speech ---------- */
+
+  band(f, i) {
+    const span = f.length * .44;
+    const lo = Math.floor(Math.pow(i / 8, 1.55) * span);
+    const hi = Math.max(lo + 2, Math.floor(Math.pow((i + 1) / 8, 1.55) * span));
+    let s = 0, c = 0;
+    for (let k = lo; k < hi && k < f.length; k++) { s += f[k]; c++; }
+    return c ? (s / c) / 255 : 0;
+  }
+
+  loop = () => {
+    const rec = this.state.mode === 'recording';
+    let level = 0;
+    const targets = new Array(8).fill(0);
+
+    if (this.analyser) {
+      const buf = this.buf || (this.buf = new Uint8Array(this.analyser.fftSize));
+      this.analyser.getByteTimeDomainData(buf);
+      let sum = 0, n = 0;
+      for (let i = 0; i < buf.length; i += 2) { const d = (buf[i] - 128) / 128; sum += d * d; n++; }
+      level = Math.min(1, Math.sqrt(sum / n) * 5.4);
+      const fq = this.freq || (this.freq = new Uint8Array(this.analyser.frequencyBinCount));
+      this.analyser.getByteFrequencyData(fq);
+      for (let i = 0; i < 8; i++) targets[i] = Math.min(1, this.band(fq, i) * 2.1);
+    } else if (this.fakeUntil && Date.now() < this.fakeUntil) {
+      level = Math.abs(Math.sin(Date.now() / 128)) * .5 + Math.random() * .18;
+      for (let i = 0; i < 8; i++) targets[i] = Math.min(1, level * (.5 + .5 * Math.sin((i / 7) * Math.PI)) * (.75 + Math.random() * .5));
+    }
+
+    const a = this.amp || 0;
+    this.amp = a + (level - a) * (level > a ? .42 : .085);
+    if (!rec) this.amp *= .82;
+
+    if (this.halo) {
+      this.halo.style.opacity = rec ? (0.06 + this.amp * 0.32).toFixed(3) : '0';
+      this.halo.style.transform = 'scale(' + (1 + this.amp * 0.34).toFixed(3) + ')';
+    }
+    this.lv = this.lv || new Array(8).fill(0);
+    for (let i = 0; i < 8; i++) {
+      const t = rec ? targets[i] : 0;
+      this.lv[i] += (t - this.lv[i]) * (t > this.lv[i] ? .5 : .08);
+      const el = this.barEls && this.barEls[i];
+      if (el) {
+        el.style.height = (3 + this.lv[i] * 18).toFixed(1) + 'px';
+        el.style.opacity = rec ? (0.26 + this.lv[i] * 0.74).toFixed(2) : '0';
+      }
+    }
+
+    if (rec) {
+      if (this.amp > 0.07) this.lastLoud = Date.now();
+      const faint = Date.now() - (this.lastLoud || Date.now()) > 4200;
+      if (faint !== this.state.faint) this.setState({ faint });
+    } else if (this.state.faint) this.setState({ faint:false });
+
+    this.raf = requestAnimationFrame(this.loop);
+  };
+
+  async startAudio() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+      this.stream = stream;
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      this.ac = new Ctx();
+      const src = this.ac.createMediaStreamSource(stream);
+      this.analyser = this.ac.createAnalyser();
+      this.analyser.fftSize = 1024;
+      src.connect(this.analyser);
+      return true;
+    } catch (e) {
+      this.setState({ mode:'idle', listening:false, fault:'permission' });
+      return false;
+    }
+  }
+  stopAudio() {
+    if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+    if (this.ac) { try { this.ac.close(); } catch (e) {} }
+    this.stream = null; this.ac = null; this.analyser = null;
+  }
+
+  startSpeech() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return false;
+    const rec = new SR();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+    rec.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) this.heard(r[0].transcript.trim());
+        else interim += r[0].transcript;
+      }
+      if (interim.trim()) this.showPhrase(interim.trim());
+      this.lastSpeech = Date.now();
+    };
+    rec.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { this.hardStop(); this.setState({ fault:'permission' }); }
+      else if (e.error === 'network') this.setState({ fault:'network' });
+    };
+    rec.onend = () => { if (this.state.mode === 'recording') { try { rec.start(); } catch (err) {} } };
+    this.rec = rec;
+    try { rec.start(); } catch (e) {}
+    return true;
+  }
+
+  /* ---------- session ---------- */
+
+  toggleMic = () => { this.state.mode === 'recording' ? this.commit() : this.start(); };
+
+  async start() {
+    this.clearScript();
+    this.setState({ mode:'recording', view:'home', temp:[], elapsed:0, quiet:false, faint:false, toast:null, fault:null, editing:null, phrase:'', phraseVisible:false });
+    this.lastSpeech = Date.now();
+    this.lastLoud = Date.now();
+    clearInterval(this.timer);
+    this.timer = setInterval(this.tick, 500);
+    const ok = await this.startAudio();
+    if (ok) this.startSpeech();
+  }
+
+  tick = () => {
+    if (this.state.mode !== 'recording') return;
+    const since = Date.now() - (this.lastSpeech || Date.now());
+    this.setState(s => ({ elapsed: s.elapsed + 0.5, quiet: since > 5000 }));
+    if (since > 30000) this.commit();
+  };
+
+  hardStop() {
+    clearInterval(this.timer);
+    this.clearScript();
+    if (this.rec) { const r = this.rec; this.rec = null; r.onend = null; try { r.stop(); } catch (e) {} }
+    this.stopAudio();
+    this.fakeUntil = 0;
+  }
+
+  commit = () => {
+    this.hardStop();
+    const live = this.state.temp.filter(c => !c.gone);
+    if (!live.length) { this.setState({ mode:'idle', temp:[], phrase:'', phraseVisible:false, quiet:false }); return; }
+    this.setState({ mode:'settling', phrase:'', phraseVisible:false });
+    setTimeout(() => {
+      const added = live.map((c, i) => ({ id:'t'+Date.now()+i, title:c.title, meta:c.bucket === 'today' ? (c.time || '') : c.meta, bucket:c.bucket, done:false, fresh:true }));
+      this.setState(s => ({ mode:'idle', temp:[], tasks:(s.tasks||[]).concat(added), toast:{ label:added.length + ' added', undo:false } }));
+      setTimeout(() => this.setState(s => ({ tasks:(s.tasks||[]).map(t => ({ ...t, fresh:false })) })), 60);
+      this.toastOut(2000);
+    }, 460);
+  };
+
+  toastOut(ms) {
+    clearTimeout(this.toastT);
+    this.toastT = setTimeout(() => this.setState({ toast:null }), ms);
+  }
+
+  showPhrase(text) {
+    clearTimeout(this.phraseT);
+    const t = String(text).replace(/^[“"']+|[”"']+$/g, '');
+    this.setState({ phrase:'“' + t + '”', phraseVisible:true });
+  }
+  hidePhrase() {
+    clearTimeout(this.phraseT);
+    this.phraseT = setTimeout(() => this.setState({ phraseVisible:false }), 260);
+  }
+
+  /* ---------- interpretation ---------- */
+
+  heard(raw) {
+    this.lastSpeech = Date.now();
+    this.setState({ quiet:false });
+    const clean = raw.replace(/[.,!?]+$/, '').trim();
+    const text = clean.toLowerCase();
+    if (!text) return;
+    this.showPhrase(clean);
+    setTimeout(() => this.interpret(text, clean), 260);
+  }
+
+  interpret(text, raw) {
+    this.hidePhrase();
+    if (/\b(clear|wipe|scrap|delete) (everything|it all|them all|all of it|the board|all)\b|\bstart over\b/.test(text)) return this.clearBoard();
+    if (/\bundo\b/.test(text)) return this.undo();
+    const del = text.match(/\b(delete|remove|drop|scratch|cancel|forget) (the |that )?(first|second|third|fourth|fifth|last|one|two|three|four|five|\d+)\b/);
+    if (del) return this.deleteAt(this.ordinal(del[3]));
+    const time = this.parseWhen(text);
+    const corr = text.match(/\b(actually|no|instead)?,?\s*(change|make|move|push|shift|set)\s+(that|it|the (first|second|third|fourth|fifth|last) one|the (first|second|third|fourth|fifth|last)|[a-z ]{2,22}?)\s+(to|for|back to)\s+/);
+    if (corr && time.label) {
+      let idx = -1;
+      const ref = (corr[4] || corr[5] || corr[3] || '').trim();
+      if (/^(that|it)$/.test(ref)) idx = this.lastTouched();
+      else if (/(first|second|third|fourth|fifth|last)/.test(ref)) idx = this.ordinal(ref.match(/(first|second|third|fourth|fifth|last)/)[1]);
+      else idx = this.findByTitle(ref);
+      if (idx < 0) idx = this.lastTouched();
+      if (idx >= 0) return this.correctAt(idx, time);
+    }
+    if (/^(actually |no,? )?(make|change) (that|it) /.test(text) && time.label) {
+      const i = this.lastTouched();
+      if (i >= 0) return this.correctAt(i, time);
+    }
+    this.addTemp(raw || text, time);
+  }
+
+  ordinal(word) {
+    const live = this.live();
+    const map = { first:0, one:0, second:1, two:1, third:2, three:2, fourth:3, four:3, fifth:4, five:4 };
+    if (word === 'last') return live.length - 1;
+    if (word in map) return map[word];
+    const n = parseInt(word, 10);
+    return isNaN(n) ? -1 : n - 1;
+  }
+  live() { return this.state.temp.filter(c => !c.gone); }
+  lastTouched() { const l = this.live(); return l.length ? (this.touched != null && this.touched < l.length ? this.touched : l.length - 1) : -1; }
+  findByTitle(frag) {
+    const f = frag.replace(/^(the|my)\s+/, '').trim();
+    if (f.length < 3) return -1;
+    return this.live().findIndex(c => c.title.toLowerCase().indexOf(f) >= 0 || f.indexOf(c.title.toLowerCase().split(' ')[0]) >= 0);
+  }
+
+  parseWhen(input) {
+    const W = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12 };
+    const NUM = '(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)';
+    const text = String(input)
+      .replace(new RegExp('\\b' + NUM + '\\s*(a\\.?m\\.?|p\\.?m\\.?)\\b', 'g'), (m, w, mer) => W[w] + ' ' + mer)
+      .replace(new RegExp('\\b(at|to|by|around|for)\\s+' + NUM + '\\b', 'g'), (m, p, w) => p + ' ' + W[w])
+      .replace(/\bnoon\b/g, '12 pm')
+      .replace(/\bhalf past (\d{1,2})\b/g, '$1:30');
+    let day = null, time = null;
+    if (/\btomorrow\b/.test(text)) day = 'Tomorrow';
+    else if (/\btonight\b/.test(text)) day = 'Tonight';
+    else if (/\btoday\b/.test(text)) day = 'Today';
+    else if (/\bnext week\b/.test(text)) day = 'Next week';
+    else if (/\bweekend\b/.test(text)) day = 'This weekend';
+    else { for (let i = 0; i < 7; i++) if (new RegExp('\\b' + DAYS[i] + '\\b').test(text)) { day = DAYS[i][0].toUpperCase() + DAYS[i].slice(1); break; } }
+    const words = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, eleven:11, twelve:12, noon:12 };
+    let m = text.match(/\b(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)\b/);
+    let h = null, min = 0, mer = null;
+    if (m) { h = +m[1]; min = m[2] ? +m[2] : 0; mer = m[3][0] === 'a' ? 'AM' : 'PM'; }
+    if (h === null) {
+      m = text.match(/\b(?:at|by|around|to|for)\s+(\d{1,2})(?::(\d{2}))?\b/);
+      if (m) { h = +m[1]; min = m[2] ? +m[2] : 0; }
+    }
+    if (h !== null && !mer) {
+      if (/\bmorning\b/.test(text)) mer = 'AM';
+      else if (/\b(evening|night)\b/.test(text)) mer = 'PM';
+      else mer = (h >= 8 && h <= 11) ? 'AM' : 'PM';
+    }
+    if (h === null) {
+      if (/\bmorning\b/.test(text)) { h = 9; mer = 'AM'; }
+      else if (/\bafternoon\b/.test(text)) { h = 2; mer = 'PM'; }
+      else if (/\bevening\b/.test(text)) { h = 6; mer = 'PM'; }
+      else if (/\bnight\b/.test(text)) { h = 8; mer = 'PM'; }
+    }
+    if (h !== null) { if (h > 12) { mer = 'PM'; h -= 12; } time = h + ':' + String(min).padStart(2, '0') + ' ' + mer; }
+    const label = [day, time].filter(Boolean).join(' · ');
+    return { day, time, label };
+  }
+
+  cleanTitle(text) {
+    let t = String(text)
+      .replace(/\b(tomorrow|tonight|today|next week|this weekend|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/gi, ' ')
+      .replace(/\b(at|by|around)?\s*\d{1,2}(:\d{2})?\s*(a\.?m\.?|p\.?m\.?)?\b/gi, ' ')
+      .replace(/\b(at|by|around)\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|noon)\b/gi, ' ')
+      .replace(/\b(in the )?(morning|afternoon|evening|night)\b/gi, ' ')
+      .replace(/^\s*(and|also|then|okay|ok|um|uh)\b/gi, ' ')
+      .replace(/^\s*(add|create|new task|remind me to|remember to|i need to|i have to|make sure to|don'?t forget to)\b/gi, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    t = t.replace(/\s+(at|by|around|on|to|the)$/i, '').trim();
+    if (!t) t = 'New task';
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+
+  addTemp(text, when) {
+    const title = this.cleanTitle(text);
+    const bucket = (!when.day || /Today|Tomorrow|Tonight/.test(when.day)) ? 'today' : 'later';
+    const card = { id:'c' + (this.state.seq + 1), title, meta:when.label || 'No time set', time:when.time || '', day:when.day || '', bucket, enter:true, gone:false, flash:false, oldMeta:'', recent:true };
+    this.setState(s => ({ temp: s.temp.concat(card), seq: s.seq + 1 }));
+    this.touched = this.live().length;
+    requestAnimationFrame(() => requestAnimationFrame(() => this.patch(card.id, { enter:false })));
+    setTimeout(() => this.patch(card.id, { recent:false }), 1600);
+  }
+
+  patch(id, next) {
+    this.setState(s => ({ temp: s.temp.map(c => c.id === id ? { ...c, ...next } : c) }));
+  }
+
+  correctAt(index, when) {
+    const l = this.live();
+    const card = l[index];
+    if (!card) return;
+    this.touched = index;
+    const day = when.day || card.day;
+    const time = when.time || card.time;
+    const label = [day, time].filter(Boolean).join(' · ');
+    this.patch(card.id, { oldMeta: card.meta, meta: label, day, time, bucket: (!day || /Today|Tomorrow|Tonight/.test(day)) ? 'today' : 'later', swapping:'in', flash:true, recent:true });
+    requestAnimationFrame(() => requestAnimationFrame(() => this.patch(card.id, { swapping:'out' })));
+    setTimeout(() => this.patch(card.id, { flash:false }), 900);
+    setTimeout(() => this.patch(card.id, { recent:false }), 1600);
+    setTimeout(() => this.patch(card.id, { oldMeta:'', swapping:null }), 700);
+  }
+
+  snapshot() { this.undoStack = this.state.temp.map(c => ({ ...c })); }
+
+  deleteAt(index) {
+    const l = this.live();
+    const card = l[index];
+    if (!card) return;
+    this.snapshot();
+    this.patch(card.id, { gone:true });
+    this.touched = Math.max(0, index - 1);
+    setTimeout(() => this.setState(s => ({ temp: s.temp.filter(c => !c.gone) })), 400);
+    this.setState({ toast:{ label:'Deleted', undo:true } });
+    this.toastOut(4200);
+  }
+
+  clearBoard = () => {
+    if (!this.live().length) return;
+    this.snapshot();
+    this.setState(s => ({ temp: s.temp.map((c, i) => ({ ...c, gone:true, stagger:i * 45 })) , toast:{ label:'Cleared', undo:true } }));
+    setTimeout(() => this.setState({ temp: [] }), 700);
+    this.toastOut(5000);
+  };
+
+  undo = () => {
+    if (!this.undoStack) return;
+    const restored = this.undoStack.map(c => ({ ...c, gone:false, stagger:0, enter:true }));
+    this.undoStack = null;
+    this.setState({ temp: restored, toast:{ label:'Restored', undo:false } });
+    requestAnimationFrame(() => requestAnimationFrame(() => this.setState(s => ({ temp: s.temp.map(c => ({ ...c, enter:false })) }))));
+    this.toastOut(1500);
+  };
+
+  /* ---------- scripted session ---------- */
+
+  clearScript() { (this.scriptT || []).forEach(clearTimeout); this.scriptT = []; }
+
+  runScript = () => {
+    this.clearScript();
+    if (this.state.mode !== 'recording') {
+      this.setState({ mode:'recording', view:'home', temp:[], elapsed:0, quiet:false, toast:null, fault:null, editing:null });
+      this.lastSpeech = Date.now();
+      clearInterval(this.timer);
+      this.timer = setInterval(this.tick, 500);
+    }
+    this.scriptT = SCRIPT.map(step => setTimeout(() => {
+      if (step.stop) return this.commit();
+      this.fakeUntil = Date.now() + 1500;
+      this.lastSpeech = Date.now();
+      this.showPhrase('"' + step.say + '"');
+      setTimeout(() => this.heard(step.say), 1250);
+    }, step.t));
+  };
+
+  say = (line) => {
+    if (this.state.mode !== 'recording') return;
+    this.fakeUntil = Date.now() + 900;
+    this.showPhrase('"' + line + '"');
+    setTimeout(() => this.heard(line), 700);
+  };
+
+  /* ---------- canned states ---------- */
+
+  base(extra) {
+    this.hardStop();
+    this.undoStack = null;
+    this.lastLoud = Date.now();
+    return Object.assign({ view:'home', mode:'idle', temp:[], phrase:'', phraseVisible:false, elapsed:0, quiet:false, faint:false, toast:null, fault:null, editing:null, dense:false, tasks:this.seed(extra && extra.dense) }, extra || {});
+  }
+
+  fake(list, opts) {
+    const o = opts || {};
+    const cards = list.map((s, i) => {
+      const p = s.split('|');
+      return { id:'f' + i, title:p[0], meta:p[1], time:(p[1] || '').split(' · ')[1] || '', day:(p[1] || '').split(' · ')[0] || '', bucket:/Wednesday|Friday|Next|Monday|Thursday/.test(p[1] || '') ? 'later' : 'today', enter:false, gone:false, oldMeta:o.oldOn === i ? p[2] : '', flash:o.oldOn === i, swapping:o.oldOn === i ? 'out' : null };
+    });
+    return cards;
+  }
+
+  go(key) {
+    return () => {
+      const T = this.base;
+      const five = ['Call Rahul|Tomorrow · 5:00 PM','Reply to the client|Tomorrow · 4:00 PM','Buy groceries|Tomorrow · 11:00 AM','Send Amit the API document|Wednesday','Book flights for Goa|Friday · 9:00 AM'];
+      switch (key) {
+        case 'empty': return this.setState(this.base({ tasks:[], active:key }));
+        case 'today': return this.setState(this.base({ active:key }));
+        case 'later': return this.setState(this.base({ view:'later', active:key }));
+        case 'done': return this.setState(this.base({ view:'done', active:key }));
+        case 'dense': return this.setState(this.base({ dense:true, active:key }));
+        case 'edit': {
+          const s = this.base({ active:key });
+          const first = s.tasks.find(t => !t.done);
+          return this.setState(Object.assign(s, { editing:first.id, editTitle:first.title }));
+        }
+        case 'start': return this.setState(this.base({ mode:'recording', elapsed:2, active:key }));
+        case 'speech': return this.setState(this.base({ mode:'recording', elapsed:6, phrase:'"and remind me to send Amit…"', phraseVisible:true, active:key }));
+        case 'one': return this.setState(this.base({ mode:'recording', elapsed:9, temp:this.fake([five[0]]), active:key }));
+        case 'five': return this.setState(this.base({ mode:'recording', elapsed:34, temp:this.fake(five), active:key }));
+        case 'correct': {
+          const s = this.base({ mode:'recording', elapsed:22, active:key });
+          const cards = this.fake(['Call Rahul|Tomorrow · 3:00 PM|Tomorrow · 5:00 PM','Reply to the client|Tomorrow · 4:00 PM','Buy groceries|Tomorrow · 11:00 AM'], { oldOn:0 });
+          return this.setState(Object.assign(s, { temp:cards }));
+        }
+        case 'delete': {
+          const s = this.base({ mode:'recording', elapsed:26, active:key });
+          const cards = this.fake(five.slice(0, 3));
+          cards[1].gone = true;
+          this.undoStack = cards.map(c => ({ ...c, gone:false }));
+          setTimeout(() => this.setState(st => ({ temp: st.temp.filter(c => !c.gone) })), 420);
+          return this.setState(Object.assign(s, { temp:cards, toast:{ label:'Deleted', undo:true } }));
+        }
+        case 'clear': {
+          const s = this.base({ mode:'recording', elapsed:31, active:key });
+          const cards = this.fake(five.slice(0, 4)).map((c, i) => ({ ...c, gone:true, stagger:i * 45 }));
+          this.undoStack = cards.map(c => ({ ...c, gone:false, stagger:0 }));
+          setTimeout(() => this.setState({ temp: [] }), 700);
+          return this.setState(Object.assign(s, { temp:cards, toast:{ label:'Cleared', undo:true } }));
+        }
+        case 'undo': {
+          const s = this.base({ mode:'recording', elapsed:33, active:key });
+          const cards = this.fake(five.slice(0, 3)).map(c => ({ ...c, enter:true }));
+          this.setState(Object.assign(s, { temp:cards, toast:{ label:'Restored', undo:false } }));
+          return requestAnimationFrame(() => requestAnimationFrame(() => this.setState(st => ({ temp: st.temp.map(c => ({ ...c, enter:false })) }))));
+        }
+        case 'silence': return this.setState(this.base({ mode:'recording', elapsed:47, quiet:true, temp:this.fake(five.slice(0, 3)), active:key }));
+        case 'settle': {
+          const s = this.base({ mode:'recording', elapsed:38, active:key });
+          this.setState(Object.assign(s, { temp:this.fake(five.slice(0, 3)) }));
+          return setTimeout(() => this.commit(), 900);
+        }
+        case 'permission': return this.setState(this.base({ fault:'permission', active:key }));
+        case 'network': return this.setState(this.base({ mode:'recording', elapsed:14, temp:this.fake(five.slice(0, 2)), fault:'network', active:key }));
+        case 'dark': return this.setState(Object.assign(this.base({ active:key }), { theme:'dark' }));
+      }
+    };
+  }
+
+  toggleTheme = () => this.setState(s => ({ theme: s.theme === 'light' ? 'dark' : 'light' }));
+  toggleDone = () => this.setState(s => ({ view: s.view === 'done' ? 'home' : 'done', editing:null }));
+  closeEditor = () => this.setState({ editing:null });
+  setEditTitle = (e) => {
+    const v = e.target.value;
+    this.setState(s => ({ editTitle:v, tasks:s.tasks.map(t => t.id === s.editing ? { ...t, title:v } : t) }));
+  };
+  deleteEditing = () => this.setState(s => ({ tasks:s.tasks.filter(t => t.id !== s.editing), editing:null }));
+  pickChip = (label) => () => this.setState(s => ({
+    tasks: s.tasks.map(t => t.id === s.editing ? { ...t, meta: label === 'No time' ? '' : label, bucket: /Wednesday|Next week/.test(label) ? 'later' : 'today' } : t),
+    editing: s.editing
+  }));
+  toggleTask = (id) => () => this.setState(s => ({ tasks:s.tasks.map(t => t.id === id ? { ...t, done:!t.done } : t) }));
+  openTask = (id, title) => () => { if (this.state.mode === 'idle') this.setState({ editing:id, editTitle:title }); };
+  faultAction = () => {
+    if (this.state.fault === 'permission') { this.setState({ fault:null }); this.runScript(); }
+    else this.setState({ fault:null });
+  };
+
+  /* ---------- render values ---------- */
+
+  renderVals() {
+    const s = this.state;
+    const base = s.theme === 'dark' ? DARK : LIGHT;
+    const pa = this.props.accent;
+    const th = (pa && pa !== LIGHT.accent) ? Object.assign({}, base, { accent:pa }) : base;
+    const rec = s.mode === 'recording';
+    const settling = s.mode === 'settling';
+    const tasks = s.tasks || [];
+    const board = rec || settling;
+    const accent = th.accent;
+    const off = this.props.organicOffset != null ? this.props.organicOffset : 13;
+
+    const rail = [
+      { label:'Quiet states', items:[['empty','Empty home'],['today','Today, populated'],['later','Later'],['done','Completed'],['dense','18 tasks, density'],['edit','Manual editing']] },
+      { label:'Recording', items:[['start','Just started'],['speech','Current speech'],['one','One temporary task'],['five','Five temporary tasks'],['correct','Spoken correction'],['delete','Spoken delete'],['clear','Clear board'],['undo','Undo'],['silence','Long silence']] },
+      { label:'Finish + edges', items:[['settle','Stop → settle'],['permission','Mic denied'],['network','Transcription failure'],['dark','Dark mode']] }
+    ];
+    let n = 0;
+    const railGroups = rail.map(g => ({
+      label: g.label,
+      items: g.items.map(([key, label]) => {
+        n++;
+        const on = s.active === key;
+        return { label, num: String(n).padStart(2, '0'), go: this.go(key), bg: on ? (s.theme === 'dark' ? 'rgba(255,255,255,.07)' : 'rgba(33,31,28,.06)') : 'transparent', fg: on ? th.ink : th.muted, weight: on ? 600 : 400 };
+      })
+    }));
+
+    const visible = tasks.filter(t => s.view === 'done' ? t.done : !t.done);
+    const buckets = s.view === 'done'
+      ? [{ label:'Completed today', rows: visible }]
+      : s.view === 'later'
+        ? [{ label:'Later', rows: visible.filter(t => t.bucket === 'later') }]
+        : [{ label:'Today', rows: visible.filter(t => t.bucket === 'today') }, { label:'Later', rows: visible.filter(t => t.bucket === 'later') }];
+
+    this.barRefs = this.barRefs || Array.from({ length:8 }, (_, i) => (el) => { this.barEls = this.barEls || []; if (el) this.barEls[i] = el; });
+
+    const sections = buckets.filter(b => b.rows.length).map(b => ({
+      label: b.label,
+      rows: b.rows.map((t, i) => ({
+        title: t.title,
+        meta: t.meta || '',
+        metaH: t.meta ? '18px' : '0px',
+        op: t.fresh ? 0 : (t.done ? .58 : 1),
+        ty: t.fresh ? 8 : 0,
+        delay: (i * 26) + 'ms',
+        ringColor: t.done ? th.ink : th.faint,
+        ringFill: t.done ? th.ink : 'transparent',
+        dotOp: t.done ? 1 : 0,
+        dotScale: t.done ? 1 : .3,
+        titleColor: t.done ? th.muted : th.ink,
+        strike: t.done ? 'line-through' : 'none',
+        toggle: this.toggleTask(t.id),
+        open: this.openTask(t.id, t.title)
+      }))
+    }));
+
+    const temp = s.temp.map((c, i) => {
+      const dir = i % 2 === 0 ? -1 : 1;
+      const organic = settling ? 0 : dir * (off - (i % 3) * 4);
+      return {
+        n: String(i + 1),
+        title: c.title,
+        meta: c.meta,
+        oldMeta: c.oldMeta || '',
+        mh: c.gone ? '0px' : '120px',
+        mb: c.gone ? '0px' : '11px',
+        op: c.gone ? 0 : (c.enter ? 0 : 1),
+        dx: c.gone ? organic + dir * 6 : organic,
+        ty: c.enter ? 10 : (c.gone ? -4 : 0),
+        sc: c.gone ? .97 : (c.enter ? .985 : 1),
+        delay: (c.stagger || 0) + 'ms',
+        pad: settling ? '11px 2px' : '14px 16px',
+        bg: settling ? 'transparent' : (c.recent ? th.tint : th.surface),
+        border: settling ? 'transparent' : th.line,
+        shadow: settling ? 'none' : '0 4px 14px -10px rgba(40,28,20,.20)',
+        numOp: settling ? 0 : 1,
+        numScale: settling ? .6 : 1,
+        numBorder: th.line,
+        washOp: c.flash ? 1 : 0,
+        metaOp: c.swapping === 'in' ? 0 : 1,
+        metaY: c.swapping === 'in' ? 7 : 0,
+        oldOp: c.oldMeta ? (c.swapping === 'out' ? 0 : 1) : 0,
+        oldY: c.swapping === 'out' ? -7 : 0
+      };
+    });
+
+    const mm = String(Math.floor(s.elapsed / 60)).padStart(2, '0');
+    const ss = String(Math.floor(s.elapsed % 60)).padStart(2, '0');
+    const liveCount = s.temp.filter(c => !c.gone).length;
+
+    const captions = {
+      empty:['01','Empty home','One editorial line, one instruction, one control. No carousel, no onboarding — the mic is the tutorial.'],
+      today:['02','Today, populated','Rows are deliberately quiet: 16.5px title, 13px time beneath, no dividers, no chips. Tap a row to edit, tap the circle to complete.'],
+      later:['03','Later','Same rows, filtered. Later exists as a section on home and as a filter — not as a second information architecture.'],
+      done:['04','Completed','Reached from the header, never occupying home. Rows drop to 58% with a filled ring and a hairline strike.'],
+      dense:['05','18 tasks','The density check. Type does the hierarchy, so eighteen rows still scan; nothing gains a container as the list grows.'],
+      edit:['06','Manual editing','Tap-to-edit sheet: title field, five time chips, delete. Everything voice can do, a thumb can also do.'],
+      start:['07','Recording just started','Mic turns terracotta and grows 72→80px, a warm ambient wash rises under the lower third, the list recedes. 240ms, one gesture.'],
+      speech:['08','Current speech','Only the unresolved phrase shows, centred above the mic. It leaves the moment the phrase becomes a card.'],
+      one:['09','One temporary task','Card materialises: 10px rise, 0.985→1 scale, 440ms. Confident, not bouncy — it reads as "understood", not "generated".'],
+      five:['10','Five temporary tasks','Alternating ±9–13px offset. Enough to feel like thoughts landing, never enough to break the left reading edge.'],
+      correct:['11','Spoken correction','Only the time field moves: old value lifts 7px and fades, new value rises into place. The card surface warms to coral and cools back over 1.6s — no badge, no label.'],
+      delete:['12','Spoken delete','The card collapses its own height so neighbours close the gap by physics, not by jump. Undo appears for four seconds.'],
+      clear:['13','Clear board','All cards leave together on a 45ms stagger. The session keeps listening — clearing the board is not stopping.'],
+      undo:['14','Undo','Restoration reuses the entry motion exactly. Nothing celebratory: the board simply is the way it was.'],
+      silence:['15','Long silence','Halo and bars fall to rest — no invented activity. A 4.2s breath ring says recording is alive, and after ~4s the copy softens to "we can barely hear you". No countdown.'],
+      settle:['16','Stop → settle','Offsets resolve to zero, numbers scale out, card chrome dissolves, rows land in the permanent list. 460ms, then "3 added".'],
+      permission:['17','Microphone denied','Stated plainly, no red. The scripted path stays available so the product is never a dead end.'],
+      network:['18','Transcription failure','The board is preserved and said so. Recording continues; only the interpretation is retrying.'],
+      dark:['19','Dark mode','Warm inversion, never grey. Paper #1A1714, surface #221E1A, ink #F2EDE5, accent lifted to #D2634A so it holds against the dark.']
+    };
+    const cap = captions[s.active] || captions.today;
+
+    const chips = ['No time','9:00 AM','11:00 AM','3:00 PM','Tomorrow','Wednesday'];
+    const editing = tasks.find(t => t.id === s.editing);
+    const editChips = chips.map(label => {
+      const on = editing && ((label === 'No time' && !editing.meta) || editing.meta === label);
+      return { label, pick:this.pickChip(label), bg: on ? th.ink : 'transparent', fg: on ? th.onink : th.muted, border: on ? th.ink : th.line };
+    });
+
+    return {
+      th, railGroups, sections, temp,
+      haloRef: (el) => { this.halo = el; },
+      bars: this.barRefs.map(ref => ({ ref })),
+      metersOp: board ? 1 : 0,
+      ambientOp: rec ? (s.faint ? .5 : 1) : 0,
+      toggleMic: this.toggleMic, runScript: this.runScript, undo: this.undo,
+      toggleTheme: this.toggleTheme, themeLabel: s.theme === 'dark' ? 'Light' : 'Dark',
+      toggleDone: this.toggleDone, doneLabel: s.view === 'done' ? 'Back' : 'Done',
+      liveLabel: rec ? 'Stop listening' : 'Start live microphone',
+      liveHint: this.hasSR === false ? 'chrome only' : (rec ? 'live' : 'tap'),
+      liveBg: rec ? th.ink : 'transparent',
+      liveFg: rec ? th.bg : th.ink,
+      liveBorder: rec ? th.ink : th.line,
+      micNote: this.hasSR === false ? 'Live speech needs Chrome — the scripted session runs the same parser everywhere.' : 'Real speech recognition. Say: "call Rahul tomorrow at five", then "actually change Rahul to three pm", then "delete the second one".',
+      showEmpty: !board && !tasks.filter(t => s.view === 'done' ? t.done : !t.done).length && s.view !== 'done',
+      showList: !!sections.length,
+      showDoneEmpty: s.view === 'done' && !sections.length,
+      showBoard: board,
+      boardEmpty: board && !s.temp.length,
+      boardEmptyLine: s.fault === 'network' ? '' : 'Listening. Say anything — one thing or ten.',
+      listOpacity: board ? .18 : 1,
+      boardOp: settling ? 0 : 1,
+      listScale: board ? .985 : 1,
+      listY: board ? -10 : 0,
+      listSat: board ? .6 : 1,
+      chromeOpacity: board ? .3 : 1,
+      showToast: !!s.toast,
+      toastLabel: s.toast ? s.toast.label : '',
+      toastUndo: !!(s.toast && s.toast.undo),
+      showFault: !!s.fault,
+      faultTitle: s.fault === 'permission' ? 'Crisp can’t hear you' : 'Still listening — interpretation paused',
+      faultBody: s.fault === 'permission' ? 'Microphone access is off for Crisp. Turn it on in Settings, or add this one by hand.' : 'Your five items are safe on the board. We’ll catch up the moment you’re back.',
+      faultCta: s.fault === 'permission' ? 'Open Settings' : 'Retry',
+      faultDot: s.fault === 'permission' ? th.faint : th.accent,
+      faultAction: this.faultAction,
+      phrase: s.phrase,
+      phraseH: s.phraseVisible && s.phrase ? '44px' : '0px',
+      phraseOp: s.phraseVisible ? 1 : 0,
+      phraseY: s.phraseVisible ? 0 : 6,
+      caretOp: rec && s.phraseVisible ? 1 : 0,
+      statusOp: board ? 1 : 0,
+      statusLabel: settling ? 'Saving' : (s.faint ? 'Still listening · we can barely hear you' : 'Listening…'),
+      clock: mm + ':' + ss,
+      breathOp: rec && (s.faint || s.quiet) ? .5 : 0,
+      breathAnim: rec && (s.faint || s.quiet) ? 'crispBreathe 4.2s ease-in-out infinite' : 'none',
+      micBg: board ? th.accent : th.ink,
+      micSize: board ? '80px' : '72px',
+      micScale: 1,
+      micShadow: board ? '0 8px 20px -8px rgba(150,60,38,.42)' : '0 6px 18px -10px rgba(40,28,20,.38)',
+      micGlyphOp: board ? 0 : 1,
+      micGlyphScale: board ? .7 : 1,
+      stopGlyphOp: board ? 1 : 0,
+      stopGlyphScale: board ? 1 : .6,
+      showEditor: !!editing,
+      editTitle: s.editTitle,
+      setEditTitle: this.setEditTitle,
+      closeEditor: this.closeEditor,
+      deleteEditing: this.deleteEditing,
+      editChips,
+      captionNum: cap[0] + ' / 19',
+      captionTitle: cap[1],
+      captionBody: cap[2],
+      liveCount
+    };
+  }
+}
+</script>
+</body>
+</html>

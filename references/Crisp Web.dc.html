@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#EFE9E1; -webkit-font-smoothing:antialiased; }
+  a { color:#211E1B; text-decoration:none; }
+  a:hover { color:#766E65; }
+  button { font:inherit; cursor:pointer; }
+  ::selection { background:rgba(232,137,76,.2); }
+  [data-dusk] * { transition: background-color .34s cubic-bezier(.3,.7,.2,1), color .34s cubic-bezier(.3,.7,.2,1), border-color .34s cubic-bezier(.3,.7,.2,1); }
+  @keyframes crispIn { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+  @keyframes crispCaret { 0%,45% { opacity:1 } 55%,100% { opacity:.15 } }
+  @keyframes crispBreathe { 0%,100% { transform:scale(1); opacity:.34 } 50% { transform:scale(1.1); opacity:.14 } }
+</style>
+</helmet>
+
+<div data-dusk="true" style="--canvas:{{ t.canvas }}; --bg:{{ t.bg }}; --surface:{{ t.surface }}; --ink:{{ t.ink }}; --muted:{{ t.muted }}; --faint:{{ t.faint }}; --line:{{ t.line }}; --accent:{{ t.accent }}; --onink:{{ t.onink }}; --tint:{{ t.tint }}; --glow:{{ t.glow }}; min-height:100vh; background:var(--canvas,#EFE9E1); color:var(--ink,#211E1B); font-family:'Instrument Sans',system-ui,sans-serif; display:flex;">
+
+  <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+    <aside style="width:212px; flex:none; padding:30px 26px; display:flex; flex-direction:column; gap:30px; position:sticky; top:0; height:100vh; box-sizing:border-box; opacity:{{ chromeOp }}; transition:opacity .34s ease;">
+      <div style="font-family:'Instrument Serif',Georgia,serif; font-size:24px; letter-spacing:-.01em;">crisp</div>
+      <div style="display:flex; flex-direction:column; gap:1px;">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+          <button onClick="{{ n.go }}" style="display:flex; align-items:center; padding:8px 10px; margin:0 -10px; border:none; border-radius:8px; background:{{ n.bg }}; color:{{ n.fg }}; font-size:15px; letter-spacing:-.008em; text-align:left;">{{ n.label }}</button>
+        </sc-for>
+      </div>
+    </aside>
+  </sc-if>
+
+  <div style="flex:1; min-width:0; display:flex; justify-content:center;">
+    <div style="width:100%; max-width:{{ colW }}; box-sizing:border-box; background:var(--bg,#F6F1EA); padding:{{ colPad }}; min-height:100vh; transition:max-width .55s cubic-bezier(.22,.7,.2,1), padding .55s cubic-bezier(.22,.7,.2,1);">
+
+      <sc-if value="{{ narrow }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding-bottom:26px; opacity:{{ chromeOp }}; transition:opacity .34s ease;">
+          <div style="font-family:'Instrument Serif',Georgia,serif; font-size:22px;">crisp</div>
+          <div style="display:flex; gap:18px;">
+            <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+              <button onClick="{{ n.go }}" style="border:none; background:transparent; padding:4px 0; font-size:14.5px; color:{{ n.fg }};">{{ n.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="position:relative; padding-bottom:200px;">
+        <div style="opacity:{{ listOp }}; transform:translateY({{ listY }}px); transition:opacity .4s cubic-bezier(.22,.7,.2,1), transform .5s cubic-bezier(.22,.7,.2,1);">
+          <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="2">
+            <div style="margin-bottom:40px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint,#A2988C); margin-bottom:12px;">{{ sec.label }}</div>
+              <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="3">
+                <div style="display:flex; align-items:flex-start; gap:16px; padding:12px 12px 12px 0; margin:0 -12px; border-radius:10px; opacity:{{ row.op }}; transform:translateY({{ row.ty }}px); transition:opacity .5s cubic-bezier(.22,.7,.2,1) {{ row.delay }}, transform .5s cubic-bezier(.22,.7,.2,1) {{ row.delay }};" style-hover="background:rgba(33,30,27,.03)">
+                  <button onClick="{{ row.toggle }}" style="flex:none; width:22px; height:22px; margin-top:2px; margin-left:12px; border-radius:999px; border:1.4px solid {{ row.ring }}; background:{{ row.fill }}; display:flex; align-items:center; justify-content:center; padding:0; transition:all .22s ease;">
+                    <span style="width:8px; height:8px; border-radius:999px; background:var(--bg,#F6F1EA); opacity:{{ row.dotOp }}; transform:scale({{ row.dotScale }}); transition:all .22s cubic-bezier(.2,.8,.2,1);"></span>
+                  </button>
+                  <div style="flex:1; min-width:0; display:flex; align-items:baseline; justify-content:space-between; gap:20px;">
+                    <div style="font-size:18px; letter-spacing:-.012em; line-height:1.3; color:{{ row.color }}; text-decoration:{{ row.strike }}; text-decoration-color:var(--faint,#A2988C);">{{ row.title }}</div>
+                    <div style="font-size:14px; color:var(--faint,#A2988C); white-space:nowrap;">{{ row.meta }}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+          <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:80px 0 40px; display:flex; flex-direction:column; gap:14px;">
+              <div style="font-family:'Instrument Serif',Georgia,serif; font-size:46px; line-height:1.05; letter-spacing:-.02em;">Nothing here yet.</div>
+              <div style="font-size:17px; color:var(--muted,#766E65);">Tap and say one thing. Or ten.</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ board }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute; inset:0 -6px auto -6px; opacity:{{ boardOp }}; transition:opacity .2s ease .24s;">
+            <sc-for list="{{ temp }}" as="card" hint-placeholder-count="3">
+              <div style="max-height:{{ card.mh }}; margin-bottom:{{ card.mb }}; opacity:{{ card.op }}; transform:translateX({{ card.dx }}px) translateY({{ card.ty }}px) scale({{ card.sc }}); transition:max-height .34s cubic-bezier(.3,.7,.2,1), margin-bottom .34s cubic-bezier(.3,.7,.2,1), opacity .3s ease, transform .44s cubic-bezier(.22,.72,.16,1);">
+                <div style="display:flex; gap:16px; align-items:flex-start; padding:{{ card.pad }}; border-radius:16px; background:{{ card.bg }}; border:1px solid {{ card.border }}; transition:all .5s cubic-bezier(.22,.72,.16,1);">
+                  <div style="flex:none; width:23px; height:23px; margin-top:1px; border-radius:999px; border:1px solid var(--line,#DED5CB); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted,#766E65); opacity:{{ card.numOp }}; transform:scale({{ card.numScale }}); transition:all .38s cubic-bezier(.22,.72,.16,1);">{{ card.n }}</div>
+                  <div style="flex:1; min-width:0; display:flex; align-items:baseline; justify-content:space-between; gap:20px;">
+                    <div style="font-size:18px; letter-spacing:-.012em; line-height:1.3; color:{{ t.ink }};">{{ card.title }}</div>
+                    <div style="position:relative; height:20px; white-space:nowrap;">
+                      <span style="position:absolute; inset:-4px -8px; border-radius:7px; background:var(--glow); opacity:{{ card.washOp }}; transition:opacity .7s ease;"></span>
+                      <span style="position:relative; display:block; font-size:14px; color:var(--muted,#766E65); opacity:{{ card.metaOp }}; transform:translateY({{ card.metaY }}px); transition:opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);">{{ card.meta }}</span>
+                      <span style="position:absolute; top:0; right:0; font-size:14px; color:var(--muted,#766E65); opacity:{{ card.oldOp }}; transform:translateY({{ card.oldY }}px); transition:opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);">{{ card.oldMeta }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:fixed; left:{{ dockLeft }}; right:0; bottom:0; display:flex; flex-direction:column; align-items:center; gap:13px; padding:110px 34px 32px; pointer-events:none; transition:left .3s ease;">
+    <div style="position:absolute; left:0; right:0; bottom:0; height:100%; background:linear-gradient(180deg, transparent 0%, var(--bg,#F6F1EA) 44%); pointer-events:none;"></div>
+    <div style="position:absolute; left:50%; bottom:-140px; width:700px; height:340px; margin-left:-350px; border-radius:50%; background:radial-gradient(ellipse at 50% 66%, var(--glow) 0%, transparent 66%); opacity:{{ ambientOp }}; transition:opacity .7s ease; pointer-events:none;"></div>
+
+    <sc-if value="{{ showToast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:relative; display:flex; align-items:center; gap:12px; padding:9px 9px 9px 17px; border-radius:999px; background:var(--surface,#FFFDF9); border:1px solid var(--line,#DED5CB); color:var(--ink,#211E1B); font-size:14px; pointer-events:auto; animation:crispIn .3s cubic-bezier(.2,.8,.2,1) both;">
+        {{ toast }}
+        <sc-if value="{{ toastUndo }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ undo }}" style="border:none; padding:5px 13px; border-radius:999px; background:var(--accent,#E8894C); color:#211E1B; font-size:13.5px; font-weight:500;">Undo</button>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <div style="position:relative; height:{{ phraseH }}; overflow:hidden; transition:height .3s cubic-bezier(.2,.8,.2,1);">
+      <div style="font-size:16px; color:var(--muted,#766E65); text-align:center; opacity:{{ phraseOp }}; transform:translateY({{ phraseY }}px); transition:opacity .3s ease, transform .3s cubic-bezier(.2,.8,.2,1);">{{ phrase }}<span style="display:inline-block; width:1.5px; height:15px; margin-left:3px; vertical-align:-2px; background:var(--faint,#A2988C); animation:crispCaret 1.1s steps(1,end) infinite; opacity:{{ caretOp }};"></span></div>
+    </div>
+
+    <div style="position:relative; display:flex; align-items:center; gap:18px; padding:9px 9px 9px 22px; border-radius:999px; background:{{ dockBg }}; border:1px solid {{ dockBorder }}; pointer-events:auto; transition:all .4s cubic-bezier(.22,.7,.2,1);">
+      <div style="display:flex; align-items:center; gap:13px;">
+        <span style="font-size:14.5px; letter-spacing:-.005em; color:{{ dockText }};">{{ status }}</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-variant-numeric:tabular-nums; color:var(--faint,#A2988C); opacity:{{ clockOp }}; transition:opacity .3s ease;">{{ clock }}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:5px; height:30px; width:{{ metersW }}; overflow:hidden; opacity:{{ metersOp }}; transition:width .4s cubic-bezier(.2,.8,.2,1), opacity .4s ease;">
+        <sc-for list="{{ bars }}" as="bar" hint-placeholder-count="9">
+          <span style="width:4.5px; border-radius:999px; background:var(--accent,#E8894C); height:{{ bar.h }}; opacity:{{ bar.op }}; transition:height .09s linear, opacity .12s linear;"></span>
+        </sc-for>
+      </div>
+      <button onClick="{{ toggle }}" style="position:relative; width:54px; height:54px; border-radius:999px; border:none; padding:0; display:flex; align-items:center; justify-content:center; background:{{ micBg }}; box-shadow:{{ micShadow }}; transition:background .34s ease, box-shadow .34s ease, transform .25s cubic-bezier(.2,.8,.2,1);" style-active="transform:scale(.93)">
+        <span style="position:absolute; inset:1px; border-radius:999px; background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 44%);"></span>
+        <span style="position:absolute; width:54px; height:54px; border-radius:999px; background:radial-gradient(circle, var(--glow) 24%, transparent 70%); opacity:{{ haloOp }}; transform:scale({{ haloScale }});"></span>
+        <span style="position:absolute; width:64px; height:64px; border-radius:999px; border:1px solid var(--accent,#E8894C); opacity:{{ breathOp }}; animation:{{ breathAnim }};"></span>
+        <span style="position:relative; display:flex; flex-direction:column; align-items:center; gap:2px; opacity:{{ micOp }}; transform:scale({{ micGlyph }}); transition:all .24s cubic-bezier(.2,.8,.2,1);">
+          <span style="width:8px; height:14px; border-radius:4px; background:{{ glyphFill }};"></span>
+          <span style="width:13px; height:6px; border-bottom:1.5px solid {{ glyphFill }}; border-left:1.5px solid {{ glyphFill }}; border-right:1.5px solid {{ glyphFill }}; border-radius:0 0 8px 8px;"></span>
+        </span>
+        <span style="position:absolute; width:14px; height:14px; border-radius:3.5px; background:{{ glyphFill }}; opacity:{{ stopOp }}; transform:scale({{ stopScale }}); transition:all .24s cubic-bezier(.2,.8,.2,1);"></span>
+      </button>
+    </div>
+
+    <div style="position:relative; font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint,#A2988C);">{{ hint }}</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const LIGHT = { canvas:'#EFE9E1', bg:'#F6F1EA', surface:'#FFFDF9', ink:'#211E1B', muted:'#766E65', faint:'#A2988C', line:'#DED5CB', accent:'#A85A2C', onink:'#FDFBF7', tint:'#FCF2E9', glow:'rgba(224,138,74,.18)' };
+const DUSK  = { canvas:'#1B1713', bg:'#15120F', surface:'#201C17', ink:'#F4EEE4', muted:'#9A8F82', faint:'#6C6358', line:'#2B251F', accent:'#E8894C', onink:'#15120F', tint:'#291F18', glow:'rgba(232,137,76,.26)' };
+
+const SEED = [
+  { id:'a', title:'Call Rahul', meta:'3:00 PM', bucket:'today', done:false },
+  { id:'b', title:'Buy groceries', meta:'11:00 AM', bucket:'today', done:false },
+  { id:'c', title:'Review pull request', meta:'', bucket:'today', done:false },
+  { id:'d', title:'Send API document to Amit', meta:'Wednesday', bucket:'later', done:false },
+  { id:'e', title:'Book the dentist', meta:'Next week', bucket:'later', done:false },
+  { id:'f', title:'Pay the electricity bill', meta:'8:10 AM', bucket:'today', done:true }
+];
+
+class Component extends DCLogic {
+  state = { view:'home', phase:'idle', tasks:SEED, temp:[], phrase:'', phraseOn:false, elapsed:0, toast:null, toastUndo:false, amp:0, lv:new Array(9).fill(0), faint:false, fresh:false, wide:true };
+
+  componentDidMount() {
+    this.keys = (e) => {
+      if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); this.toggle(); }
+      if (e.key === 'Escape' && this.state.phase !== 'idle') this.finish();
+    };
+    this.onResize = () => this.setState({ wide: window.innerWidth >= 1000 });
+    window.addEventListener('keydown', this.keys);
+    window.addEventListener('resize', this.onResize);
+    this.onResize();
+    this.lv = new Array(9).fill(0);
+    this.lastLoud = Date.now();
+    this.raf = requestAnimationFrame(this.pulse);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.keys);
+    window.removeEventListener('resize', this.onResize);
+    cancelAnimationFrame(this.raf);
+    this.stopAll();
+  }
+
+  stopAll() { (this.timers || []).forEach(clearTimeout); this.timers = []; clearInterval(this.tickT); }
+  at(t, fn) { this.timers.push(setTimeout(fn, t)); }
+
+  pulse = () => {
+    const rec = this.state.phase === 'rec';
+    const level = this.speaking ? Math.min(1, Math.abs(Math.sin(Date.now() / 132)) * .58 + Math.random() * .2) : 0;
+    const a = this.amp || 0;
+    this.amp = a + (level - a) * (level > a ? .42 : .085);
+    for (let i = 0; i < 9; i++) {
+      const t = rec ? Math.min(1, level * (.45 + .55 * Math.sin((i / 8) * Math.PI)) * (.7 + Math.random() * .55)) : 0;
+      this.lv[i] += (t - this.lv[i]) * (t > this.lv[i] ? .5 : .08);
+    }
+    if (rec && this.amp > .07) this.lastLoud = Date.now();
+    const faint = rec && Date.now() - (this.lastLoud || Date.now()) > 4200;
+    if (Math.abs(this.amp - (this.shown || 0)) > .014 || faint !== this.state.faint) { this.shown = this.amp; this.setState({ amp:this.amp, lv:this.lv.slice(), faint }); }
+    this.raf = requestAnimationFrame(this.pulse);
+  };
+
+  say(t, line, hold) {
+    this.at(t, () => { this.speaking = true; this.setState({ phrase:'“' + line + '”', phraseOn:true }); });
+    this.at(t + (hold || 1500), () => { this.speaking = false; this.setState({ phraseOn:false }); });
+  }
+  card(t, title, meta) {
+    this.at(t, () => {
+      const c = { id:'c' + t, title, meta, bucket:/Wednesday|Friday|Next/.test(meta) ? 'later' : 'today', enter:true, recent:true };
+      this.setState(s => ({ temp:s.temp.concat(c) }));
+      requestAnimationFrame(() => requestAnimationFrame(() => this.setState(s => ({ temp:s.temp.map(x => x.id === c.id ? { ...x, enter:false } : x) }))));
+      this.at(1600, () => this.setState(s => ({ temp:s.temp.map(x => x.id === c.id ? { ...x, recent:false } : x) })));
+    });
+  }
+
+  toggle = () => { this.state.phase === 'idle' ? this.start() : this.finish(); };
+
+  start() {
+    this.stopAll();
+    this.lastLoud = Date.now();
+    this.setState({ phase:'rec', temp:[], elapsed:0, toast:null, view:'home', faint:false });
+    this.tickT = setInterval(() => this.setState(s => ({ elapsed:s.elapsed + 1 })), 1000);
+
+    this.say(600, 'Call Rahul tomorrow at five', 1700);
+    this.card(2200, 'Call Rahul', 'Tomorrow · 5:00 PM');
+    this.say(3400, 'Reply to the client tomorrow at four', 1800);
+    this.card(5100, 'Reply to the client', 'Tomorrow · 4:00 PM');
+    this.say(6400, 'Actually make Rahul three', 1500);
+    this.at(7800, () => {
+      this.setState(s => ({ temp:s.temp.map((c, i) => i === 0 ? { ...c, oldMeta:c.meta, meta:'Tomorrow · 3:00 PM', swap:'in', flash:true, recent:true } : c) }));
+      requestAnimationFrame(() => requestAnimationFrame(() => this.setState(s => ({ temp:s.temp.map((c, i) => i === 0 ? { ...c, swap:'out' } : c) }))));
+      this.at(900, () => this.setState(s => ({ temp:s.temp.map(c => ({ ...c, flash:false, oldMeta:'', swap:null })) })));
+      this.at(1700, () => this.setState(s => ({ temp:s.temp.map(c => ({ ...c, recent:false })) })));
+    });
+    this.say(9400, 'Add send Amit the API document Wednesday', 1900);
+    this.card(11300, 'Send Amit the API document', 'Wednesday');
+    this.say(12600, 'Delete the second one', 1400);
+    this.at(14000, () => {
+      this.undoStack = this.state.temp.map(c => ({ ...c }));
+      this.setState(s => ({ temp:s.temp.map((c, i) => i === 1 ? { ...c, gone:true } : c), toast:'Deleted', toastUndo:true }));
+      this.at(460, () => this.setState(s => ({ temp:s.temp.filter(c => !c.gone) })));
+      this.at(4200, () => this.setState({ toast:null }));
+    });
+  }
+
+  undo = () => {
+    if (!this.undoStack) return;
+    const restored = this.undoStack.map(c => ({ ...c, gone:false, enter:true }));
+    this.undoStack = null;
+    this.setState({ temp:restored, toast:'Restored', toastUndo:false });
+    requestAnimationFrame(() => requestAnimationFrame(() => this.setState(s => ({ temp:s.temp.map(c => ({ ...c, enter:false })) }))));
+    this.at(1400, () => this.setState({ toast:null }));
+  };
+
+  finish = () => {
+    this.stopAll();
+    this.speaking = false;
+    const live = this.state.temp.filter(c => !c.gone);
+    this.setState({ phase:'settle', phraseOn:false, faint:false });
+    this.at(520, () => {
+      const added = live.map((c, i) => ({ id:'n' + Date.now() + i, title:c.title, meta:c.bucket === 'today' ? (c.meta.split(' · ')[1] || '') : c.meta, bucket:c.bucket, done:false }));
+      this.setState(s => ({ phase:'idle', temp:[], tasks:s.tasks.concat(added), toast:added.length ? added.length + ' added' : null, toastUndo:false, fresh:true }));
+      requestAnimationFrame(() => requestAnimationFrame(() => this.setState({ fresh:false })));
+      this.at(2200, () => this.setState({ toast:null }));
+    });
+  };
+
+  toggleTask = (id) => () => this.setState(s => ({ tasks:s.tasks.map(t => t.id === id ? { ...t, done:!t.done } : t) }));
+  setView = (v) => () => this.setState({ view:v });
+
+  renderVals() {
+    const s = this.state;
+    const rec = s.phase === 'rec';
+    const settling = s.phase === 'settle';
+    const board = rec || settling;
+    const t = rec ? DUSK : LIGHT;
+    const done = s.tasks.filter(x => x.done);
+    const open = s.tasks.filter(x => !x.done);
+
+    const vis = s.view === 'done' ? done : open;
+    const groups = s.view === 'done'
+      ? [{ label:'Completed today', rows:vis }]
+      : s.view === 'later'
+        ? [{ label:'Later', rows:vis.filter(x => x.bucket === 'later') }]
+        : [{ label:'Today', rows:vis.filter(x => x.bucket === 'today') }, { label:'Later', rows:vis.filter(x => x.bucket === 'later') }];
+
+    const sections = groups.filter(g => g.rows.length).map(g => ({
+      label:g.label,
+      rows:g.rows.map((x, i) => ({
+        title:x.title, meta:x.meta || '',
+        op:s.fresh ? 0 : (x.done ? .5 : 1), ty:s.fresh ? 8 : 0, delay:(i * 26) + 'ms',
+        ring:x.done ? t.ink : t.faint, fill:x.done ? t.ink : 'transparent',
+        dotOp:x.done ? 1 : 0, dotScale:x.done ? 1 : .3,
+        color:x.done ? t.muted : t.ink, strike:x.done ? 'line-through' : 'none',
+        toggle:this.toggleTask(x.id)
+      }))
+    }));
+
+    const temp = s.temp.map((c, i) => {
+      const dir = i % 2 === 0 ? -1 : 1;
+      const organic = settling ? 0 : dir * (10 - (i % 3) * 3);
+      return {
+        n:String(i + 1), title:c.title, meta:c.meta, oldMeta:c.oldMeta || '',
+        mh:c.gone ? '0px' : '130px', mb:c.gone ? '0px' : '12px',
+        op:c.gone ? 0 : (c.enter ? 0 : 1),
+        dx:c.gone ? organic + dir * 6 : organic,
+        ty:c.enter ? 10 : (c.gone ? -4 : 0),
+        sc:c.gone ? .97 : (c.enter ? .985 : 1),
+        pad:settling ? '13px 0' : '17px 20px',
+        bg:settling ? 'transparent' : (c.recent ? t.tint : t.surface),
+        border:settling ? 'transparent' : (c.recent ? t.accent : t.line),
+        numOp:settling ? 0 : 1, numScale:settling ? .6 : 1,
+        washOp:c.flash ? 1 : 0,
+        metaOp:c.swap === 'in' ? 0 : 1, metaY:c.swap === 'in' ? 7 : 0,
+        oldOp:c.oldMeta ? (c.swap === 'out' ? 0 : 1) : 0, oldY:c.swap === 'out' ? -7 : 0
+      };
+    });
+
+    const nav = [
+      { key:'home', label:'Today' },
+      { key:'later', label:'Later' },
+      { key:'done', label:'Done' }
+    ].map(n => ({
+      label:n.label, go:this.setView(n.key),
+      bg: s.view === n.key ? 'rgba(33,30,27,.05)' : 'transparent',
+      fg: s.view === n.key ? t.ink : t.faint
+    }));
+
+    return {
+      t, sections, temp, board, nav,
+      wide: s.wide, narrow: !s.wide,
+      empty: !sections.length && !board,
+      colW: board ? '788px' : (s.wide ? '712px' : '660px'),
+      colPad: s.wide ? (board ? '34px 46px 0' : '34px 40px 0') : '26px 26px 0',
+      dockLeft: s.wide ? '212px' : '0px',
+      toggle:this.toggle, undo:this.undo,
+      chromeOp: rec ? 0 : (settling ? .6 : 1),
+      listOp: board ? .06 : 1,
+      boardOp: settling ? 0 : 1,
+      listY: board ? -8 : 0,
+      phrase:s.phrase,
+      phraseH: s.phraseOn ? '30px' : '0px',
+      phraseOp: s.phraseOn ? 1 : 0,
+      phraseY: s.phraseOn ? 0 : 6,
+      caretOp: s.phraseOn ? 1 : 0,
+      status: settling ? 'Saving' : (rec ? (s.faint ? 'Still listening · we can barely hear you' : 'Listening…') : 'Tap to talk'),
+      clock: '00:' + String(Math.min(59, s.elapsed)).padStart(2, '0'),
+      clockOp: board ? 1 : 0,
+      showToast: !!s.toast, toast:s.toast || '', toastUndo:s.toastUndo,
+      dockBg: t.surface,
+      dockBorder: rec ? t.line : '#E2DACF',
+      dockText: t.ink,
+      micBg: rec ? t.accent : t.ink,
+      micShadow: rec ? '0 12px 30px -10px rgba(232,137,76,.5)' : '0 6px 16px -10px rgba(40,28,20,.4)',
+      glyphFill: rec ? DUSK.bg : LIGHT.onink,
+      micOp: board ? 0 : 1, micGlyph: board ? .7 : 1,
+      stopOp: board ? 1 : 0, stopScale: board ? 1 : .6,
+      haloOp: rec ? (.1 + s.amp * .5) : 0,
+      haloScale: 1 + s.amp * .7,
+      breathOp: rec && s.faint ? .5 : 0,
+      breathAnim: rec && s.faint ? 'crispBreathe 4.2s ease-in-out infinite' : 'none',
+      bars: s.lv.map(v => ({ h:(4 + v * 24).toFixed(1) + 'px', op:rec ? (.3 + v * .7).toFixed(2) : 0 })),
+      metersOp: rec ? 1 : 0,
+      metersW: rec ? '80px' : '0px',
+      ambientOp: rec ? (s.faint ? .45 : 1) : 0,
+      hint: board ? 'Esc to stop · nothing is saved until you do' : 'Press space to start'
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Crisp",
+    "slug": "crisp",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "crisp",
+    "platforms": ["ios", "android", "web"],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

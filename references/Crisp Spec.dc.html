@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#EFE9E1; -webkit-font-smoothing:antialiased; }
+  a { color:#211E1B; }
+  a:hover { color:#766E65; }
+  ::selection { background:rgba(224,138,74,.22); }
+</style>
+</helmet>
+
+<div style="background:#EFE9E1; color:#211E1B; font-family:'Instrument Sans',system-ui,sans-serif; padding:0 0 120px;">
+
+  <header style="max-width:1120px; margin:0 auto; padding:70px 44px 54px; display:flex; flex-wrap:wrap; gap:40px; align-items:flex-end; justify-content:space-between;">
+    <div style="display:flex; flex-direction:column; gap:14px; max-width:640px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:#A2988C;">Crisp · engineering handoff · v1.0</div>
+      <h1 style="margin:0; font-family:'Instrument Serif',Georgia,serif; font-weight:400; font-size:clamp(40px,5vw,66px); line-height:1.02; letter-spacing:-.022em;">Two environments,<br />one gesture.</h1>
+      <p style="margin:0; font-size:17px; line-height:1.5; color:#5A5249; text-wrap:pretty;">Every token below is exact and final. Light is where you organize; Dusk is where you think out loud. The theme is derived from recording state — it is never a user preference.</p>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:7px; font-size:14px; color:#766E65;">
+      <a href="Crisp Dusk.dc.html">Mobile · 22 states →</a>
+      <a href="Crisp Web.dc.html">Web · 6 states →</a>
+      <a href="Crisp Landing.dc.html">Marketing · 3 states →</a>
+    </div>
+  </header>
+
+  <div style="max-width:1120px; margin:0 auto; padding:0 44px; display:flex; flex-direction:column; gap:64px;">
+
+    <sc-for list="{{ colorSets }}" as="set" hint-placeholder-count="2">
+      <section style="display:flex; flex-wrap:wrap; gap:32px 56px;">
+        <div style="flex:0 0 220px; display:flex; flex-direction:column; gap:7px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#A2988C;">{{ set.n }}</div>
+          <div style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; letter-spacing:-.015em;">{{ set.title }}</div>
+          <div style="font-size:14px; line-height:1.5; color:#766E65; text-wrap:pretty;">{{ set.note }}</div>
+        </div>
+        <div style="flex:1 1 520px; min-width:320px; display:flex; flex-direction:column;">
+          <sc-for list="{{ set.rows }}" as="r" hint-placeholder-count="6">
+            <div style="display:flex; align-items:center; gap:18px; padding:11px 0; border-bottom:1px solid #E4DCD2;">
+              <span style="flex:none; width:34px; height:34px; border-radius:9px; background:{{ r.hex }}; border:1px solid rgba(33,30,27,.12);"></span>
+              <span style="flex:0 0 176px; font-size:14.5px; letter-spacing:-.008em;">{{ r.name }}</span>
+              <span style="flex:0 0 92px; font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#766E65;">{{ r.hex }}</span>
+              <span style="flex:1; min-width:120px; font-size:13.5px; color:#A2988C; text-wrap:pretty;">{{ r.use }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-for>
+
+    <section style="display:flex; flex-wrap:wrap; gap:32px 56px;">
+      <div style="flex:0 0 220px; display:flex; flex-direction:column; gap:7px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#A2988C;">03</div>
+        <div style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; letter-spacing:-.015em;">Typography</div>
+        <div style="font-size:14px; line-height:1.5; color:#766E65; text-wrap:pretty;">Instrument Sans carries the product. Instrument Serif appears only in empty states and marketing. JetBrains Mono is reserved for labels, timers and numbers.</div>
+      </div>
+      <div style="flex:1 1 560px; min-width:320px; display:flex; flex-direction:column;">
+        <div style="display:flex; gap:16px; padding:0 0 9px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:#A2988C; border-bottom:1px solid #E4DCD2;">
+          <span style="flex:1 1 150px;">Role</span>
+          <span style="flex:0 0 118px;">Family</span>
+          <span style="flex:0 0 46px;">Wt</span>
+          <span style="flex:0 0 56px;">Size</span>
+          <span style="flex:0 0 52px;">Line</span>
+          <span style="flex:0 0 62px;">Track</span>
+        </div>
+        <sc-for list="{{ type }}" as="r" hint-placeholder-count="9">
+          <div style="display:flex; gap:16px; align-items:baseline; padding:10px 0; border-bottom:1px solid #E4DCD2; font-size:13.5px;">
+            <span style="flex:1 1 150px; font-size:14.5px; letter-spacing:-.008em;">{{ r.role }}</span>
+            <span style="flex:0 0 118px; color:#766E65;">{{ r.family }}</span>
+            <span style="flex:0 0 46px; font-family:'JetBrains Mono',monospace; color:#766E65;">{{ r.weight }}</span>
+            <span style="flex:0 0 56px; font-family:'JetBrains Mono',monospace; color:#766E65;">{{ r.size }}</span>
+            <span style="flex:0 0 52px; font-family:'JetBrains Mono',monospace; color:#766E65;">{{ r.line }}</span>
+            <span style="flex:0 0 62px; font-family:'JetBrains Mono',monospace; color:#766E65;">{{ r.track }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display:flex; flex-wrap:wrap; gap:32px 56px;">
+      <div style="flex:0 0 220px; display:flex; flex-direction:column; gap:7px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#A2988C;">04 · 05</div>
+        <div style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; letter-spacing:-.015em;">Spacing,<br />radius, depth</div>
+        <div style="font-size:14px; line-height:1.5; color:#766E65; text-wrap:pretty;">A 4px base. Only two elevations exist in the entire product, and Dusk uses neither — dark surfaces separate tonally.</div>
+      </div>
+      <div style="flex:1 1 560px; min-width:320px; display:flex; flex-wrap:wrap; gap:36px 48px;">
+        <div style="flex:1 1 210px; display:flex; flex-direction:column;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:#A2988C; padding-bottom:9px; border-bottom:1px solid #E4DCD2;">Spacing scale</div>
+          <sc-for list="{{ space }}" as="r" hint-placeholder-count="8">
+            <div style="display:flex; align-items:center; gap:14px; padding:8px 0; border-bottom:1px solid #E4DCD2;">
+              <span style="flex:0 0 30px; font-family:'JetBrains Mono',monospace; font-size:12.5px;">{{ r.k }}</span>
+              <span style="flex:none; height:6px; width:{{ r.k }}; border-radius:999px; background:#D9CFC3;"></span>
+              <span style="flex:1; font-size:13px; color:#A2988C; text-align:right; text-wrap:pretty;">{{ r.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:1 1 210px; display:flex; flex-direction:column;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:#A2988C; padding-bottom:9px; border-bottom:1px solid #E4DCD2;">Radius &amp; depth</div>
+          <sc-for list="{{ radius }}" as="r" hint-placeholder-count="8">
+            <div style="display:flex; align-items:baseline; gap:14px; padding:8px 0; border-bottom:1px solid #E4DCD2;">
+              <span style="flex:1; font-size:13.5px;">{{ r.k }}</span>
+              <span style="flex:0 0 auto; font-family:'JetBrains Mono',monospace; font-size:12px; color:#766E65; text-align:right;">{{ r.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:flex; flex-wrap:wrap; gap:32px 56px;">
+      <div style="flex:0 0 220px; display:flex; flex-direction:column; gap:7px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#A2988C;">06</div>
+        <div style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; letter-spacing:-.015em;">Component<br />inventory</div>
+        <div style="font-size:14px; line-height:1.5; color:#766E65; text-wrap:pretty;">Nine components hold the whole product. Anything not listed here should not be built.</div>
+      </div>
+      <div style="flex:1 1 560px; min-width:320px; display:flex; flex-direction:column; gap:22px;">
+        <sc-for list="{{ components }}" as="c" hint-placeholder-count="9">
+          <div style="display:flex; flex-wrap:wrap; gap:6px 20px; padding-bottom:18px; border-bottom:1px solid #E4DCD2;">
+            <div style="flex:0 0 150px; font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:-.01em;">{{ c.name }}</div>
+            <div style="flex:1 1 300px; display:flex; flex-direction:column; gap:6px;">
+              <div style="font-size:14px; line-height:1.5; color:#5A5249; text-wrap:pretty;">{{ c.body }}</div>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <sc-for list="{{ c.states }}" as="st" hint-placeholder-count="4">
+                  <span style="padding:4px 10px; border-radius:999px; background:rgba(33,30,27,.05); font-family:'JetBrains Mono',monospace; font-size:11px; color:#766E65;">{{ st }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display:flex; flex-wrap:wrap; gap:32px 56px;">
+      <div style="flex:0 0 220px; display:flex; flex-direction:column; gap:7px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#A2988C;">07</div>
+        <div style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; letter-spacing:-.015em;">Motion</div>
+        <div style="font-size:14px; line-height:1.5; color:#766E65; text-wrap:pretty;">Every animation explains one state change. Nothing exceeds 560ms. Fast beats theatrical, because these run hundreds of times a day.</div>
+      </div>
+      <div style="flex:1 1 560px; min-width:320px; display:flex; flex-direction:column;">
+        <div style="display:flex; gap:16px; padding-bottom:9px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:#A2988C; border-bottom:1px solid #E4DCD2;">
+          <span style="flex:1 1 130px;">Trigger</span>
+          <span style="flex:1 1 260px;">Properties</span>
+          <span style="flex:0 0 62px;">Dur</span>
+          <span style="flex:0 0 132px;">Easing</span>
+        </div>
+        <sc-for list="{{ motion }}" as="m" hint-placeholder-count="10">
+          <div style="display:flex; gap:16px; align-items:baseline; padding:10px 0; border-bottom:1px solid #E4DCD2;">
+            <span style="flex:1 1 130px; font-size:14px; letter-spacing:-.008em;">{{ m.k }}</span>
+            <span style="flex:1 1 260px; font-size:13.5px; line-height:1.45; color:#5A5249; text-wrap:pretty;">{{ m.v }}</span>
+            <span style="flex:0 0 62px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#766E65;">{{ m.ms }}</span>
+            <span style="flex:0 0 132px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#A2988C;">{{ m.curve }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display:flex; flex-wrap:wrap; gap:32px 56px;">
+      <div style="flex:0 0 220px; display:flex; flex-direction:column; gap:7px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#A2988C;">08 · 09</div>
+        <div style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; letter-spacing:-.015em;">Responsive,<br />accessibility</div>
+        <div style="font-size:14px; line-height:1.5; color:#766E65; text-wrap:pretty;">The web is the same product with more air. Breakpoints change spacing and column width — never the interaction.</div>
+      </div>
+      <div style="flex:1 1 560px; min-width:320px; display:flex; flex-wrap:wrap; gap:36px 48px;">
+        <div style="flex:1 1 240px; display:flex; flex-direction:column;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:#A2988C; padding-bottom:9px; border-bottom:1px solid #E4DCD2;">Responsive</div>
+          <sc-for list="{{ responsive }}" as="r" hint-placeholder-count="6">
+            <div style="display:flex; flex-direction:column; gap:3px; padding:10px 0; border-bottom:1px solid #E4DCD2;">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#211E1B;">{{ r.k }}</span>
+              <span style="font-size:13.5px; line-height:1.45; color:#766E65; text-wrap:pretty;">{{ r.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:1 1 240px; display:flex; flex-direction:column;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:#A2988C; padding-bottom:9px; border-bottom:1px solid #E4DCD2;">Accessibility</div>
+          <sc-for list="{{ a11y }}" as="r" hint-placeholder-count="6">
+            <div style="display:flex; flex-direction:column; gap:3px; padding:10px 0; border-bottom:1px solid #E4DCD2;">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#211E1B;">{{ r.k }}</span>
+              <span style="font-size:13.5px; line-height:1.45; color:#766E65; text-wrap:pretty;">{{ r.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:flex; flex-wrap:wrap; gap:32px 56px;">
+      <div style="flex:0 0 220px; display:flex; flex-direction:column; gap:7px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#A2988C;">10</div>
+        <div style="font-family:'Instrument Serif',Georgia,serif; font-size:27px; letter-spacing:-.015em;">Reduction<br />pass</div>
+        <div style="font-size:14px; line-height:1.5; color:#766E65; text-wrap:pretty;">What was removed after the designs were finished, and why the product is easier to read without it.</div>
+      </div>
+      <div style="flex:1 1 560px; min-width:320px; display:flex; flex-direction:column;">
+        <sc-for list="{{ cuts }}" as="c" hint-placeholder-count="8">
+          <div style="display:flex; flex-wrap:wrap; gap:4px 20px; padding:11px 0; border-bottom:1px solid #E4DCD2;">
+            <span style="flex:0 0 190px; font-size:14px; letter-spacing:-.008em; text-decoration:line-through; text-decoration-color:#C6BBAE; color:#766E65;">{{ c.k }}</span>
+            <span style="flex:1 1 260px; font-size:13.5px; line-height:1.5; color:#5A5249; text-wrap:pretty;">{{ c.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display:flex; flex-wrap:wrap; gap:32px 56px; padding-top:12px;">
+      <div style="flex:0 0 220px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:#A2988C;">Final test</div>
+      <div style="flex:1 1 560px; min-width:320px; display:flex; flex-direction:column; gap:14px;">
+        <div style="font-family:'Instrument Serif',Georgia,serif; font-size:clamp(26px,3vw,38px); line-height:1.12; letter-spacing:-.018em; max-width:640px; text-wrap:pretty;">Tap once. Keep talking. Watch items form. Correct them by speaking. Tap stop. Leave.</div>
+        <div style="font-size:15px; line-height:1.55; color:#5A5249; max-width:560px; text-wrap:pretty;">Nothing in the product needs to be taught. The mic is the only affordance on the idle screen; the numbers on temporary cards are the only vocabulary; and nothing is saved until the user stops, so there is no wrong first attempt.</div>
+      </div>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      colorSets: [
+        { n:'01', title:'Light · organize', note:'Parchment and warm stone. Permanent rows sit directly on the app background — no card, no shadow, ever.', rows:[
+          { name:'canvas', hex:'#EFE9E1', use:'Outer canvas, web gutters, desk tone' },
+          { name:'surface.app', hex:'#F6F1EA', use:'App background — where permanent rows live' },
+          { name:'surface.raised', hex:'#FFFDF9', use:'Sheets, dock, toast. Never a task row' },
+          { name:'text.primary', hex:'#211E1B', use:'Task titles, headlines · 14.6:1' },
+          { name:'text.secondary', hex:'#766E65', use:'Body, status, sheet copy · 5.1:1' },
+          { name:'text.tertiary', hex:'#A2988C', use:'Times, mono labels, unchecked rings · 3.1:1' },
+          { name:'separator', hex:'#DED5CB', use:'Hairlines, sheet borders, chip outlines' },
+          { name:'accent.brand', hex:'#A85A2C', use:'Mic idle fill on marketing, CTA · 4.8:1' },
+          { name:'accent.correction', hex:'#FCF2E9', use:'Just-created or just-corrected surface' },
+          { name:'state.success', hex:'#5C6B4A', use:'“3 added” dot, sync confirmed' },
+          { name:'state.error', hex:'#9A4433', use:'Permission denied dot. Text stays neutral' }
+        ] },
+        { n:'02', title:'Dusk · think out loud', note:'Applied only while recording, derived from state and never exposed as a setting. Warm ink, never grey.', rows:[
+          { name:'rec.canvas', hex:'#1B1713', use:'Outer canvas behind the workspace' },
+          { name:'rec.background', hex:'#15120F', use:'Recording environment background' },
+          { name:'rec.surface', hex:'#201C17', use:'Temporary session cards, dock' },
+          { name:'rec.text.primary', hex:'#F4EEE4', use:'Temporary task titles · 13.9:1' },
+          { name:'rec.text.secondary', hex:'#9A8F82', use:'Metadata, status, transcript · 5.2:1' },
+          { name:'rec.text.tertiary', hex:'#6C6358', use:'Reference numbers, timer' },
+          { name:'rec.separator', hex:'#2B251F', use:'Card hairline — replaces all shadow' },
+          { name:'accent.ember', hex:'#E8894C', use:'Mic, halo, audio bars, correction · 8.6:1' },
+          { name:'accent.correction', hex:'#291F18', use:'Card surface for 1.6s after a change' }
+        ] }
+      ],
+      type: [
+        { role:'Page title', family:'Instrument Serif', weight:'400', size:'27px', line:'1.1', track:'-0.015em' },
+        { role:'Empty-state headline', family:'Instrument Serif', weight:'400', size:'37px', line:'1.06', track:'-0.015em' },
+        { role:'Section label', family:'JetBrains Mono', weight:'400', size:'10px', line:'1.2', track:'0.15em' },
+        { role:'Task title', family:'Instrument Sans', weight:'400', size:'16.5px', line:'1.28', track:'-0.011em' },
+        { role:'Task metadata', family:'Instrument Sans', weight:'400', size:'13px', line:'1.35', track:'0.004em' },
+        { role:'Session task title', family:'Instrument Sans', weight:'400', size:'16.5px', line:'1.28', track:'-0.011em' },
+        { role:'Reference number', family:'JetBrains Mono', weight:'400', size:'10.5px', line:'1', track:'0' },
+        { role:'Recording status', family:'Instrument Sans', weight:'400', size:'13px', line:'1.3', track:'-0.004em' },
+        { role:'Timer', family:'JetBrains Mono', weight:'400', size:'12.5px', line:'1', track:'0 · tabular' },
+        { role:'Transcript', family:'Instrument Sans', weight:'400', size:'15px', line:'1.4', track:'-0.006em' },
+        { role:'Button', family:'Instrument Sans', weight:'500', size:'15.5px', line:'1', track:'-0.005em' },
+        { role:'Toast', family:'Instrument Sans', weight:'400', size:'13.5px', line:'1.2', track:'-0.005em' },
+        { role:'Web task title', family:'Instrument Sans', weight:'400', size:'18px', line:'1.3', track:'-0.012em' },
+        { role:'Landing hero', family:'Instrument Serif', weight:'400', size:'52–88px', line:'0.98', track:'-0.025em' },
+        { role:'Landing body', family:'Instrument Sans', weight:'400', size:'19px', line:'1.5', track:'0' },
+        { role:'Landing section title', family:'Instrument Serif', weight:'400', size:'29px', line:'1.12', track:'-0.015em' }
+      ],
+      space: [
+        { k:'4px', v:'Title to metadata' },
+        { k:'8px', v:'Card offset unit, chip gap' },
+        { k:'12px', v:'Session card gap, ring to title' },
+        { k:'16px', v:'Card padding y, web row gap' },
+        { k:'24px', v:'Screen gutter, sheet padding' },
+        { k:'32px', v:'Section to section' },
+        { k:'48px', v:'Web section rhythm' },
+        { k:'64px', v:'Landing block rhythm' }
+      ],
+      radius: [
+        { k:'Session card', v:'15px mobile · 16px web' },
+        { k:'Sheet', v:'26px top · 46px bottom' },
+        { k:'Microphone', v:'999px · 72px idle, 80px recording' },
+        { k:'Web dock', v:'999px pill, 54px control' },
+        { k:'Button', v:'999px · 14px stacked auth' },
+        { k:'Chip · toast', v:'999px' },
+        { k:'Audio bar', v:'999px · 4.5px wide' },
+        { k:'Elevation · light sheet', v:'0 4px 14px -10px rgba(40,28,20,.20)' },
+        { k:'Elevation · mic recording', v:'0 12px 34px -10px rgba(232,137,76,.50)' },
+        { k:'Elevation · Dusk cards', v:'none — 1px #2B251F only' }
+      ],
+      components: [
+        { name:'TaskRow', body:'Permanent task. 21px ring, 16.5px title, optional 13px time. Sits on the background; never elevated, never bordered.', states:['default','completed','pressed','fresh (enter 8px/26ms stagger)','dark'] },
+        { name:'SessionTask', body:'Temporary card inside a recording session. Reference number, title, one metadata field. Alternating ±8–16px offset.', states:['entering','settled','recent (ember hairline + tint)','correcting','removing','settling (aligned, chrome off)'] },
+        { name:'RecordingButton', body:'Single tap toggles. 72px ink at idle, 80px ember while recording, glyph crossfades mic → stop square.', states:['idle','pressed (0.94)','recording','committing','denied'] },
+        { name:'AudioMeter', body:'Nine 4.5px rounded bars, 4px rest → 30px peak, each fed by its own frequency band. Silence shows rest, never invented motion.', states:['hidden','live','at rest','breathing (near-silence)'] },
+        { name:'StatusText', body:'One line beside the meter. Listening… / Still listening · we can barely hear you / Saving. Returns automatically.', states:['listening','faint input','saving','idle (Tap to talk)'] },
+        { name:'UndoAction', body:'Pill with inline Undo. 4.2s for delete, 5s for clear. Appears for session-scoped destructive actions only.', states:['deleted','cleared','restored (no action)','added (no action)'] },
+        { name:'Navigation', body:'Header on mobile; 212px rail above 1000px on web. Today, Later, Done. Hidden entirely while recording.', states:['today','later','done','hidden'] },
+        { name:'EmptyState', body:'Serif headline, one supporting line, the mic. No illustration, no carousel, no dismiss.', states:['no tasks','completed empty','later empty'] },
+        { name:'ErrorState', body:'Inline row above the mic: dot, one line, one line of help, one action. Never a modal, never red text.', states:['permission denied','transcription failure','offline'] }
+      ],
+      motion: [
+        { k:'Idle → recording', v:'background, surface, text and border colours cross-fade; navigation opacity → 0; list → 5%; mic 72→80px and ink→ember', ms:'340ms', curve:'(.3,.7,.2,1)' },
+        { k:'Task appears', v:'translateY 10→0, scale .985→1, opacity 0→1', ms:'440ms', curve:'(.22,.72,.16,1)' },
+        { k:'Voice arriving', v:'halo opacity 6→38% and scale 1→1.34; bars 4→30px', ms:'~3 frames', curve:'lerp .42' },
+        { k:'Voice falling', v:'same properties decay so the meter never jitters', ms:'~10 frames', curve:'lerp .085' },
+        { k:'Correction', v:'old value translateY 0→−7px + fade out; new value −7→0 + fade in; card surface → tint and hairline → ember, then back', ms:'300 / 1600ms', curve:'(.2,.8,.2,1)' },
+        { k:'Delete', v:'max-height 130→0, margin 12→0, opacity → 0, translateX +6px; neighbours close by their own height animation', ms:'340ms', curve:'(.3,.7,.2,1)' },
+        { k:'Clear session', v:'all cards run the delete motion on a 45ms per-card stagger; session stays live', ms:'340 + 45n', curve:'(.3,.7,.2,1)' },
+        { k:'Undo', v:'restored cards replay the entry motion exactly; no highlight, no celebration', ms:'440ms', curve:'(.22,.72,.16,1)' },
+        { k:'Stop', v:'offsets → 0, numbers scale 1→0.6 and fade, card fill and border → transparent, padding 14→11px', ms:'460ms', curve:'(.22,.72,.16,1)' },
+        { k:'Task settle', v:'rows enter Today/Later with translateY 8→0 on a 26ms stagger', ms:'500ms', curve:'(.22,.7,.2,1)' },
+        { k:'Recording → idle', v:'Dusk cross-fades back to light while cards align; toast “3 added” for 2.2s', ms:'340ms', curve:'(.3,.7,.2,1)' },
+        { k:'Task completion', v:'ring fills, dot scale .3→1, row opacity → 50%, strike draws', ms:'220ms', curve:'(.2,.8,.2,1)' }
+      ],
+      responsive: [
+        { k:'< 480px', v:'24px gutter, 16.5px titles, mic 72px centred 30px above the safe area' },
+        { k:'480–999px', v:'26px gutter, 660px column, header navigation instead of the rail' },
+        { k:'≥ 1000px', v:'212px rail (Today, Later, Done), 712px workspace column, 46px gutter' },
+        { k:'Recording, web', v:'column widens 712 → 788px over 550ms and returns on commit' },
+        { k:'≥ 1440px', v:'Column and rail hold their width; extra space becomes canvas. No third column is ever added' },
+        { k:'Landing', v:'1180px max, single column below 900px, hero demo keeps its full 800px height' }
+      ],
+      a11y: [
+        { k:'Touch targets', v:'Mic 72px, rings and rows 44px minimum, chips 40px with 8px separation' },
+        { k:'Focus', v:'2px #A85A2C outline at 2px offset; ember #E8894C in Dusk. Never removed' },
+        { k:'Contrast', v:'All text ≥ 4.5:1 except 13px tertiary metadata at 3.1:1, paired with a 4.5:1 title' },
+        { k:'Reduced motion', v:'Offsets render at 0, cards cross-fade in 120ms, halo and bars become a static level, Dusk cross-fade drops to 120ms' },
+        { k:'Screen reader', v:'“Start recording” / “Stop recording, 3 items pending”. Session cards announce “Item 2 of 3, Call Rahul, tomorrow 3 PM”' },
+        { k:'Live regions', v:'Status is polite; created, corrected and deleted items announce once each. The transcript is never announced' }
+      ],
+      cuts: [
+        { k:'Section counts', v:'“Today 3” told the user something they could see in one glance.' },
+        { k:'Row dividers', v:'Removed everywhere. Whitespace and the mono label already carry the structure.' },
+        { k:'Card shadows in Dusk', v:'Replaced by one hairline. Shadow on a dark surface reads as blur, not lift.' },
+        { k:'Second shadow layer', v:'Every light surface went from two shadows to one ambient shadow.' },
+        { k:'“Updated” badges', v:'The correction motion already says it. A label would repeat the sentence.' },
+        { k:'Rail counts', v:'Numbers next to Today / Later / Done were decoration in a three-item nav.' },
+        { k:'Greeting and date header', v:'It cost 90px of permanent vertical space above the first task.' },
+        { k:'Dark-mode toggle', v:'Dusk is derived from recording state. A theme switch would make it a preference instead of a place.' },
+        { k:'Countdown to auto-stop', v:'Showing the 30 seconds turned a pause into a deadline.' },
+        { k:'Full transcript panel', v:'Only the unresolved phrase remains. Reading back your own speech is not the product.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
