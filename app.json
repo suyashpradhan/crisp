@@ -6,13 +6,29 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "scheme": "crisp",
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "server"
     },
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false,
+          "microphonePermission": "Crisp uses your microphone to capture spoken tasks.",
+          "recordAudioAndroid": true
+        }
+      ],
+      "expo-web-browser"
+    ]
   }
 }
