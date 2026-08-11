@@ -9,13 +9,22 @@ export type Task = {
   status: TaskStatus;
   createdAt: string;
   sourceSessionId?: string;
+  updatedAt?: string;
   bucket: TaskBucket;
 };
 
-export type VoiceSessionStatus = "idle" | "recording" | "processing";
+export type VoiceSessionStatus = "idle" | "recording" | "processing" | "failed";
+
+export type RetainedRecording = {
+  createdAt: string;
+  durationMs: number;
+  fileName: string;
+  mimeType: "audio/m4a" | "audio/webm";
+  uri: string;
+};
 
 export type SessionTask = Pick<Task, "id" | "title" | "dueDate" | "dueTime"> & {
-  reference: number;
+  reference: string;
 };
 
 export type AppView = "today" | "later" | "completed";
