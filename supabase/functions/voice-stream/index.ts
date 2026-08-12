@@ -21,18 +21,23 @@ const createOperationSchema = z.object({
   type: z.literal("create"),
 });
 const updateOperationSchema = z.object({
-  patch: z.object({
-    dueDate: z.string().trim().min(1).nullable().optional(),
-    dueTime: z.string().trim().min(1).nullable().optional(),
-    title: z.string().trim().min(1).max(280).optional(),
-  }).refine((patch) => Object.keys(patch).length > 0),
+  patch: z
+    .object({
+      dueDate: z.string().trim().min(1).nullable().optional(),
+      dueTime: z.string().trim().min(1).nullable().optional(),
+      title: z.string().trim().min(1).max(280).optional(),
+    })
+    .refine((patch) => Object.keys(patch).length > 0),
   ref: z.string().trim().min(1).max(40),
   type: z.literal("update"),
 });
 const sessionOperationSchema = z.discriminatedUnion("type", [
   createOperationSchema,
   updateOperationSchema,
-  z.object({ ref: z.string().trim().min(1).max(40), type: z.literal("delete") }),
+  z.object({
+    ref: z.string().trim().min(1).max(40),
+    type: z.literal("delete"),
+  }),
   z.object({ type: z.literal("clear") }),
   z.object({ type: z.literal("undo") }),
 ]);
@@ -42,11 +47,18 @@ const sessionSchema = z.object({
   id: z.string().trim().min(1).max(120),
 });
 const clientMessageSchema = z.discriminatedUnion("type", [
-  z.object({ audio: z.string().min(1).max(maxAudioBase64Length), encoding: z.literal("pcm_s16le"), sampleRate: z.literal(16000), type: z.literal("audio") }),
+  z.object({
+    audio: z.string().min(1).max(maxAudioBase64Length),
+    encoding: z.literal("pcm_s16le"),
+    sampleRate: z.literal(16000),
+    type: z.literal("audio"),
+  }),
   z.object({ session: sessionSchema, type: z.literal("configure") }),
 ]);
 const sarvamChatResponseSchema = z.object({
-  choices: z.array(z.object({ message: z.object({ content: z.string() }) })).min(1),
+  choices: z
+    .array(z.object({ message: z.object({ content: z.string().nullable() }) }))
+    .min(1),
 });
 
 type DraftTask = z.infer<typeof draftTaskSchema>;
@@ -59,15 +71,23 @@ Deno.serve(async (request) => {
   if (unauthorized instanceof Response) return unauthorized;
 
   if (request.headers.get("upgrade")?.toLowerCase() !== "websocket") {
-    return Response.json({ error: "A WebSocket upgrade is required." }, { status: 400 });
+    return Response.json(
+      { error: "A WebSocket upgrade is required." },
+      { status: 400 },
+    );
   }
 
   const sarvamKey = Deno.env.get("SARVAM_API_KEY")?.trim();
   if (!sarvamKey) {
-    return Response.json({ error: "Live transcription is not configured." }, { status: 503 });
+    return Response.json(
+      { error: "Live transcription is not configured." },
+      { status: 503 },
+    );
   }
 
-  const { response, socket: client } = Deno.upgradeWebSocket(request, { protocol: request.headers.get("sec-websocket-protocol") ?? undefined });
+  const { response, socket: client } = Deno.upgradeWebSocket(request, {
+    protocol: request.headers.get("sec-websocket-protocol") ?? undefined,
+  });
   let originalSocket: WebSocket | null = null;
   let translationSocket: WebSocket | null = null;
   let session: Session | null = null;
@@ -87,25 +107,42 @@ Deno.serve(async (request) => {
     if (client.readyState === WebSocket.OPEN) client.close();
   };
   const send = (message: unknown) => {
-    if (!closed && client.readyState === WebSocket.OPEN) client.send(JSON.stringify(message));
+    if (!closed && client.readyState === WebSocket.OPEN)
+      client.send(JSON.stringify(message));
   };
   const fail = (message: string, retryable: boolean) => {
-    send({ error: { code: retryable ? "provider_unavailable" : "stream_invalid", message, retryable }, type: "error" });
+    send({
+      error: {
+        code: retryable ? "provider_unavailable" : "stream_invalid",
+        message,
+        retryable,
+      },
+      type: "error",
+    });
   };
   const announceReady = () => {
-    if (session && upstreamReady) send({ sessionId: session.id, type: "ready" });
+    if (session && upstreamReady)
+      send({ sessionId: session.id, type: "ready" });
   };
 
   client.onopen = async () => {
     try {
-      originalSocket = await openSarvamSocket("transcribe", sarvamKey, (turn) => {
-        originalTurns.push(turn);
-        void processPairs();
-      });
-      translationSocket = await openSarvamSocket("translate", sarvamKey, (turn) => {
-        translationTurns.push(turn);
-        void processPairs();
-      });
+      originalSocket = await openSarvamSocket(
+        "transcribe",
+        sarvamKey,
+        (turn) => {
+          originalTurns.push(turn);
+          void processPairs();
+        },
+      );
+      translationSocket = await openSarvamSocket(
+        "translate",
+        sarvamKey,
+        (turn) => {
+          translationTurns.push(turn);
+          void processPairs();
+        },
+      );
       if (closed) {
         originalSocket.close();
         translationSocket.close();
@@ -134,7 +171,8 @@ Deno.serve(async (request) => {
       return;
     }
     if (message.data.type === "configure") {
-      if (!session || session.id !== message.data.session.id) sessionHistory.length = 0;
+      if (!session || session.id !== message.data.session.id)
+        sessionHistory.length = 0;
       session = message.data.session;
       announceReady();
       return;
@@ -143,12 +181,21 @@ Deno.serve(async (request) => {
       fail("Crisp’s live session was not initialized.", false);
       return;
     }
-    if (!originalSocket || !translationSocket || originalSocket.readyState !== WebSocket.OPEN || translationSocket.readyState !== WebSocket.OPEN) {
+    if (
+      !originalSocket ||
+      !translationSocket ||
+      originalSocket.readyState !== WebSocket.OPEN ||
+      translationSocket.readyState !== WebSocket.OPEN
+    ) {
       fail("Live transcription is reconnecting. Try again.", true);
       return;
     }
     const payload = JSON.stringify({
-      audio: { data: message.data.audio, encoding: "pcm_s16le", sample_rate: 16000 },
+      audio: {
+        data: message.data.audio,
+        encoding: "pcm_s16le",
+        sample_rate: 16000,
+      },
     });
     originalSocket.send(payload);
     translationSocket.send(payload);
@@ -162,17 +209,28 @@ Deno.serve(async (request) => {
       const translation = translationTurns.shift()!;
       if (processedRequestIds.has(original.requestId)) continue;
       processedRequestIds.add(original.requestId);
-      if (processedRequestIds.size > 100) processedRequestIds.delete(processedRequestIds.values().next().value!);
+      if (processedRequestIds.size > 100)
+        processedRequestIds.delete(processedRequestIds.values().next().value!);
 
       interpretationQueue = interpretationQueue
         .then(async () => {
           if (!session || closed) return;
-          const operations = await interpretTurn({
-            context: session.draftTasks,
-            originalTranscript: original.transcript,
-            translatedTranscript: translation.transcript,
-          }, sarvamKey);
-          session = { ...session, draftTasks: applyForContext(session.draftTasks, operations, sessionHistory) };
+          const operations = await interpretTurn(
+            {
+              context: session.draftTasks,
+              originalTranscript: original.transcript,
+              translatedTranscript: translation.transcript,
+            },
+            sarvamKey,
+          );
+          session = {
+            ...session,
+            draftTasks: applyForContext(
+              session.draftTasks,
+              operations,
+              sessionHistory,
+            ),
+          };
           send({
             languageCode: original.languageCode,
             operations,
@@ -182,32 +240,56 @@ Deno.serve(async (request) => {
             type: "turn",
           });
         })
-        .catch(() => fail("Crisp couldn’t understand that spoken thought. Keep talking or try again.", true));
+        .catch(() =>
+          fail(
+            "Crisp couldn’t understand that spoken thought. Keep talking or try again.",
+            true,
+          ),
+        );
     }
   }
 
   // An upgraded WebSocket response does not keep an Edge isolate alive on its
   // own. This promise is intentionally resolved only when the client leaves.
-  EdgeRuntime.waitUntil(new Promise<void>((resolve) => {
-    client.addEventListener("close", () => resolve(), { once: true });
-  }));
+  EdgeRuntime.waitUntil(
+    new Promise<void>((resolve) => {
+      client.addEventListener("close", () => resolve(), { once: true });
+    }),
+  );
   return response;
 });
 
 async function authenticateRequest(request: Request): Promise<Response | true> {
   const protocol = request.headers.get("sec-websocket-protocol") ?? "";
-  const token = protocol.startsWith("crisp.") ? protocol.slice("crisp.".length) : null;
-  if (!token) return Response.json({ error: "A live session token is required." }, { status: 401 });
+  const token = protocol.startsWith("crisp.")
+    ? protocol.slice("crisp.".length)
+    : null;
+  if (!token)
+    return Response.json(
+      { error: "A live session token is required." },
+      { status: 401 },
+    );
 
   try {
-    const client = createClient(Deno.env.get("SUPABASE_URL")!, supabaseSecretKey(), {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    const client = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      supabaseSecretKey(),
+      {
+        auth: { autoRefreshToken: false, persistSession: false },
+      },
+    );
     const { data, error } = await client.auth.getUser(token);
-    if (error || !data.user) return Response.json({ error: "The live session token is invalid." }, { status: 401 });
+    if (error || !data.user)
+      return Response.json(
+        { error: "The live session token is invalid." },
+        { status: 401 },
+      );
     return true;
   } catch {
-    return Response.json({ error: "Live session authentication is unavailable." }, { status: 503 });
+    return Response.json(
+      { error: "Live session authentication is unavailable." },
+      { status: 503 },
+    );
   }
 }
 
@@ -222,7 +304,11 @@ function supabaseSecretKey() {
   throw new Error("A Supabase secret key is not available to the function.");
 }
 
-function openSarvamSocket(mode: SarvamMode, apiKey: string, onTurn: (turn: SarvamTurn) => void) {
+function openSarvamSocket(
+  mode: SarvamMode,
+  apiKey: string,
+  onTurn: (turn: SarvamTurn) => void,
+) {
   return new Promise<WebSocket>((resolve, reject) => {
     const url = new URL(sarvamWebSocketUrl);
     url.searchParams.set("input_audio_codec", "pcm_s16le");
@@ -231,7 +317,9 @@ function openSarvamSocket(mode: SarvamMode, apiKey: string, onTurn: (turn: Sarva
     url.searchParams.set("model", "saaras:v4");
     url.searchParams.set("sample_rate", "16000");
     url.searchParams.set("vad_signals", "true");
-    const socket = new WebSocket(url, { headers: { "api-subscription-key": apiKey } });
+    const socket = new WebSocket(url, {
+      headers: { "api-subscription-key": apiKey },
+    });
     socket.once("open", () => resolve(socket));
     socket.once("error", reject);
     socket.on("message", (data) => {
@@ -241,54 +329,92 @@ function openSarvamSocket(mode: SarvamMode, apiKey: string, onTurn: (turn: Sarva
   });
 }
 
-type SarvamTurn = { languageCode: string | null; requestId: string; transcript: string };
+type SarvamTurn = {
+  languageCode: string | null;
+  requestId: string;
+  transcript: string;
+};
 
 function readSarvamTurn(value: string): SarvamTurn | null {
-  const parsed = parseJson(value) as {
-    data?: { language_code?: unknown; request_id?: unknown; transcript?: unknown; translation?: unknown };
-    type?: unknown;
-  } | undefined;
-  const text = typeof parsed?.data?.transcript === "string"
-    ? parsed.data.transcript
-    : typeof parsed?.data?.translation === "string"
-      ? parsed.data.translation
-      : null;
+  const parsed = parseJson(value) as
+    | {
+        data?: {
+          language_code?: unknown;
+          request_id?: unknown;
+          transcript?: unknown;
+          translation?: unknown;
+        };
+        type?: unknown;
+      }
+    | undefined;
+  const text =
+    typeof parsed?.data?.transcript === "string"
+      ? parsed.data.transcript
+      : typeof parsed?.data?.translation === "string"
+        ? parsed.data.translation
+        : null;
   if (parsed?.type !== "data" || !text?.trim()) return null;
   return {
-    languageCode: typeof parsed.data.language_code === "string" ? parsed.data.language_code : null,
-    requestId: typeof parsed.data.request_id === "string" ? parsed.data.request_id : crypto.randomUUID(),
+    languageCode:
+      typeof parsed.data.language_code === "string"
+        ? parsed.data.language_code
+        : null,
+    requestId:
+      typeof parsed.data.request_id === "string"
+        ? parsed.data.request_id
+        : crypto.randomUUID(),
     transcript: text.trim(),
   };
 }
 
-async function interpretTurn(input: {
-  context: DraftTask[];
-  originalTranscript: string;
-  translatedTranscript: string;
-}, apiKey: string): Promise<SessionOperation[]> {
+async function interpretTurn(
+  input: {
+    context: DraftTask[];
+    originalTranscript: string;
+    translatedTranscript: string;
+  },
+  apiKey: string,
+): Promise<SessionOperation[]> {
   const response = await fetch("https://api.sarvam.ai/v1/chat/completions", {
     body: JSON.stringify({
       max_tokens: 1000,
       messages: [
         { content: interpretationPrompt(input.context), role: "system" },
-        { content: `Original transcript:\n${input.originalTranscript}\n\nEnglish meaning (use only for intent):\n${input.translatedTranscript}`, role: "user" },
+        {
+          content: `Original transcript:\n${input.originalTranscript}\n\nEnglish meaning (use only for intent):\n${input.translatedTranscript}`,
+          role: "user",
+        },
       ],
       model: "sarvam-105b",
+      reasoning_effort: null,
       response_format: { type: "json_object" },
       temperature: 0,
     }),
-    headers: { "api-subscription-key": apiKey, "content-type": "application/json" },
+    headers: {
+      "api-subscription-key": apiKey,
+      "content-type": "application/json",
+    },
     method: "POST",
   });
   if (!response.ok) throw new Error("Sarvam operation interpretation failed.");
   const completion = sarvamChatResponseSchema.parse(await response.json());
-  const content = JSON.parse(completion.choices[0]!.message.content) as { operations?: unknown };
-  const operations = operationsSchema.parse(Array.isArray(content.operations) ? content.operations : []);
-  return operations.length > 0 ? operations : fallbackCreate(input.originalTranscript, input.context);
+  const rawContent = completion.choices[0]!.message.content;
+  if (!rawContent) return fallbackCreate(input.originalTranscript, input.context);
+  const content = JSON.parse(rawContent) as {
+    operations?: unknown;
+  };
+  const operations = operationsSchema.parse(
+    Array.isArray(content.operations) ? content.operations : [],
+  );
+  return operations.length > 0
+    ? operations
+    : fallbackCreate(input.originalTranscript, input.context);
 }
 
 function interpretationPrompt(context: DraftTask[]) {
-  const drafts = context.length ? context.map((task) => `#${task.reference}: ${task.title}`).join("\n") : "(none)";
+  const drafts = context.length
+    ? context.map((task) => `#${task.reference}: ${task.title}`).join("\n")
+    : "(none)";
   return `You convert a continuous voice-capture turn into JSON only: {"operations": SessionOperation[]}.
 Current temporary tasks (never permanent tasks):\n${drafts}
 Rules:
@@ -301,18 +427,40 @@ Rules:
 - Return an empty array only for pure acknowledgement or filler.`;
 }
 
-function fallbackCreate(transcript: string, drafts: DraftTask[]): SessionOperation[] {
-  if (/^(?:ok(?:ay)?|yeah|yes|no|hmm|um|uh|thanks?|thank you|that(?:'s| is) all|done|stop)[.!\s]*$/i.test(transcript)) return [];
+function fallbackCreate(
+  transcript: string,
+  drafts: DraftTask[],
+): SessionOperation[] {
+  if (
+    /^(?:ok(?:ay)?|yeah|yes|no|hmm|um|uh|thanks?|thank you|that(?:'s| is) all|done|stop)[.!\s]*$/i.test(
+      transcript,
+    )
+  )
+    return [];
   let next = largestReference(drafts) + 1;
   const phrases = transcript
     .split(/[.!?\n]+/)
-    .flatMap((sentence) => sentence.split(/(?:[,;]\s*(?:(?:and|then|also)\s+)?|\b(?:and|then|also)\s+)(?=(?:call|buy|get|book|schedule|send|email|message|reply|pay|bring|remind|plan|finish|prepare|review|update|check|order|meet|write|submit|make)\b)/i))
+    .flatMap((sentence) =>
+      sentence.split(
+        /(?:[,;]\s*(?:(?:and|then|also)\s+)?|\b(?:and|then|also)\s+)(?=(?:call|buy|get|book|schedule|send|email|message|reply|pay|bring|remind|plan|finish|prepare|review|update|check|order|meet|write|submit|make)\b)/i,
+      ),
+    )
     .map((phrase) => phrase.trim())
     .filter(Boolean);
-  return operationsSchema.parse(phrases.map((title) => ({ ref: String(next++), task: { title }, type: "create" })));
+  return operationsSchema.parse(
+    phrases.map((title) => ({
+      ref: String(next++),
+      task: { title },
+      type: "create",
+    })),
+  );
 }
 
-function applyForContext(current: DraftTask[], operations: SessionOperation[], history: DraftTask[][]) {
+function applyForContext(
+  current: DraftTask[],
+  operations: SessionOperation[],
+  history: DraftTask[][],
+) {
   let drafts = current.map((task) => ({ ...task }));
   for (const operation of operations) {
     if (operation.type === "undo") {
@@ -320,10 +468,17 @@ function applyForContext(current: DraftTask[], operations: SessionOperation[], h
       continue;
     }
     history.push(drafts.map((task) => ({ ...task })));
-    if (operation.type === "create" && !drafts.some((task) => task.reference === operation.ref)) {
+    if (
+      operation.type === "create" &&
+      !drafts.some((task) => task.reference === operation.ref)
+    ) {
       drafts = [...drafts, { ...operation.task, reference: operation.ref }];
     } else if (operation.type === "update") {
-      drafts = drafts.map((task) => task.reference === operation.ref ? applyTaskPatch(task, operation.patch) : task);
+      drafts = drafts.map((task) =>
+        task.reference === operation.ref
+          ? applyTaskPatch(task, operation.patch)
+          : task,
+      );
     } else if (operation.type === "delete") {
       drafts = drafts.filter((task) => task.reference !== operation.ref);
     } else if (operation.type === "clear") {
@@ -333,7 +488,10 @@ function applyForContext(current: DraftTask[], operations: SessionOperation[], h
   return drafts;
 }
 
-function applyTaskPatch(task: DraftTask, patch: z.infer<typeof updateOperationSchema>["patch"]): DraftTask {
+function applyTaskPatch(
+  task: DraftTask,
+  patch: z.infer<typeof updateOperationSchema>["patch"],
+): DraftTask {
   const next = { ...task };
   if (patch.title) next.title = patch.title;
   if (patch.dueDate === null) delete next.dueDate;
@@ -346,7 +504,9 @@ function applyTaskPatch(task: DraftTask, patch: z.infer<typeof updateOperationSc
 function largestReference(tasks: DraftTask[]) {
   return tasks.reduce((largest, task) => {
     const reference = Number(task.reference);
-    return Number.isSafeInteger(reference) && reference > largest ? reference : largest;
+    return Number.isSafeInteger(reference) && reference > largest
+      ? reference
+      : largest;
   }, 0);
 }
 
