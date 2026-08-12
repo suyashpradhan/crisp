@@ -10,7 +10,7 @@ In **Authentication → Providers**, enable Google and enter the Google OAuth cl
 
 ## Database migration
 
-Run this in the Supabase SQL editor:
+The tracked migration is [`../supabase/migrations/20260812094500_create_task_sync.sql`](../supabase/migrations/20260812094500_create_task_sync.sql). Apply it through your normal Supabase migration workflow. If you use the Dashboard SQL Editor, run the complete block below. It creates the `tasks` table when needed and always creates the `upsert_tasks(task_rows jsonb)` RPC that Crisp calls.
 
 ```sql
 create table public.tasks (
@@ -64,6 +64,8 @@ end;
 $$;
 
 grant execute on function public.upsert_tasks(jsonb) to authenticated;
+
+notify pgrst, 'reload schema';
 ```
 
 The client submits only the signed-in user’s local tasks through the conditional RPC, then downloads that user’s rows. The database accepts a conflicting row only when its `updated_at` is newer; the client repeats the same latest-value merge after download. Local capture is always persisted first. Without configuration or a session, sync is disabled and task capture never waits for it.
