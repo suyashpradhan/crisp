@@ -27,12 +27,13 @@ The foundation uses Expo, React Native, TypeScript, Expo Router, React Native We
 ## Commands
 
 - `npm start` — start Expo.
+- `npm run start:tunnel` — start Expo through a tunnel when an Android device cannot reach the LAN server.
 - `npm run ios`, `npm run android`, `npm run web` — open the relevant platform.
 - `npm run typecheck`, `npm run lint`, `npm test` — validate code and reducer behavior.
 
 For web development, copy `.env.example` to `.env` and set `SARVAM_API_KEY` only in the server environment. Never use an `EXPO_PUBLIC_` key for Sarvam. Native apps need a deployed HTTPS API route and its public `EXPO_PUBLIC_TRANSCRIPTION_API_URL`; it contains no secret. See [Transcription boundary](docs/TRANSCRIPTION.md) for the exact split.
 
-Optional Supabase sync needs the two publishable Supabase environment values and the RLS migration in [docs/SYNC.md](docs/SYNC.md). Gap-free live capture needs those values plus `EXPO_PUBLIC_VOICE_STREAM_URL`; it creates an invisible anonymous session rather than a sign-up wall. See [docs/LIVE_CAPTURE.md](docs/LIVE_CAPTURE.md). Neither optional capability delays local capture.
+Optional Supabase sync needs the project URL, a publishable key, and the RLS migration in [docs/SYNC.md](docs/SYNC.md). Gap-free live capture uses those same public values and derives the standard Edge Function URL automatically; `EXPO_PUBLIC_VOICE_STREAM_URL` is only an override. It creates an invisible anonymous session rather than a sign-up wall. See [docs/LIVE_CAPTURE.md](docs/LIVE_CAPTURE.md). Neither optional capability delays local capture.
 
 ## Contributing
 

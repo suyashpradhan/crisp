@@ -25,8 +25,27 @@ describe("Sarvam operation interpreter", () => {
     ]);
     expect(fetcher).toHaveBeenCalledWith(
       "https://api.sarvam.ai/v1/chat/completions",
-      expect.objectContaining({ headers: expect.objectContaining({ "api-subscription-key": "server-secret" }) }),
+      expect.objectContaining({
+        body: expect.stringContaining('"reasoning_effort":null'),
+        headers: expect.objectContaining({ "api-subscription-key": "server-secret" }),
+      }),
     );
+  });
+
+  it("falls back safely when Sarvam returns only hidden reasoning", async () => {
+    const fetcher = jest.fn(async () => new Response(JSON.stringify({
+      choices: [{ message: { content: null, reasoning_content: "Hidden reasoning" } }],
+    }), { status: 200 }));
+    const interpret = createSarvamOperationInterpreter(fetcher as unknown as typeof fetch, () => "server-secret");
+
+    await expect(interpret({
+      context: { draftTasks: [] },
+      now: new Date("2026-08-12T00:00:00.000Z"),
+      originalTranscript: "Call Raju at 5 PM.",
+      translatedTranscript: "Call Raju at 5 PM.",
+    })).resolves.toEqual([
+      { ref: "1", task: { dueTime: "5 PM", title: "Call Raju" }, type: "create" },
+    ]);
   });
 
   it("normalizes Sarvam's older flat create spelling before validation", async () => {

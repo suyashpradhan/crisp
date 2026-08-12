@@ -8,7 +8,7 @@ import { getSarvamApiKey } from "./env";
 
 const completionSchema = z.object({
   choices: z.array(z.object({
-    message: z.object({ content: z.string() }),
+    message: z.object({ content: z.string().nullable() }),
   })).min(1),
 });
 
@@ -42,6 +42,10 @@ export function createSarvamOperationInterpreter(
           ],
           // Sarvam's current generally available structured-output model.
           model: "sarvam-105b",
+          // Task extraction is deliberately small and latency-sensitive. Sarvam
+          // enables thinking by default; without this, it can spend every token
+          // on hidden reasoning and return `content: null` for a valid request.
+          reasoning_effort: null,
           response_format: { type: "json_object" },
           temperature: 0,
         }),
@@ -67,8 +71,11 @@ export function createSarvamOperationInterpreter(
       throw new TranscriptionError("transcription_failed", "Crisp could not read the task interpretation.");
     }
 
+    const rawContent = parsed.data.choices[0]!.message.content;
+    if (!rawContent) return fallbackOperations(input);
+
     try {
-      const content = JSON.parse(parsed.data.choices[0]!.message.content) as { operations?: unknown };
+      const content = JSON.parse(rawContent) as { operations?: unknown };
       const operations = Array.isArray(content.operations)
         ? content.operations.map(normalizeOperation)
         : content.operations;

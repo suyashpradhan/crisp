@@ -11,7 +11,8 @@ Crisp’s live path keeps the microphone open while you speak. It sends 16 kHz m
    ```dotenv
    EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
    EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-   EXPO_PUBLIC_VOICE_STREAM_URL=wss://YOUR_PROJECT_REF.functions.supabase.co/voice-stream
+   # Optional: Crisp derives this from EXPO_PUBLIC_SUPABASE_URL by default.
+   EXPO_PUBLIC_VOICE_STREAM_URL=wss://YOUR_PROJECT_REF.supabase.co/functions/v1/voice-stream
    ```
 
 4. Authenticate and link the Supabase CLI, then add the Sarvam key as an Edge Function secret and deploy the relay:
@@ -33,6 +34,6 @@ The app asks Sarvam for an original-language transcription and an English-intent
 
 ## Development notes
 
-This project uses Expo SDK 57 for the native PCM stream API. Restart Metro after pulling the change (`npx expo start --clear`); make a fresh native development build if an existing installed build predates the SDK upgrade. Web uses Web Audio capture because Expo’s PCM hook is native-only there.
+This project uses Expo SDK 57 for the native PCM stream API. Restart Metro after pulling the change (`npx expo start --clear`); make a fresh native development build if an existing installed build predates the SDK upgrade. Web uses Web Audio capture because Expo’s PCM hook is native-only there. A configured `EXPO_PUBLIC_SUPABASE_URL` now derives the standard Supabase Edge Function WebSocket URL; use `EXPO_PUBLIC_VOICE_STREAM_URL` only for a deliberate override.
 
 Without all three public `EXPO_PUBLIC_*` values, Crisp deliberately uses the existing file-based transcription flow. Keep `SARVAM_API_KEY`, Supabase secret/service-role keys, and `supabase/functions/.env` out of Git and out of the app bundle.
