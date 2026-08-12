@@ -1,0 +1,9 @@
+[functions.voice-stream]
+# Browsers cannot attach Authorization headers during WebSocket upgrade. The
+# handler validates the short-lived Supabase access token itself before opening
+# the socket, so the platform-level check must be disabled.
+verify_jwt = false
+
+[edge_runtime]
+# Keeps a local WebSocket worker alive for the connection lifecycle.
+policy = "per_worker"

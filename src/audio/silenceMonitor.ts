@@ -41,7 +41,7 @@ export function useSilenceMonitor({
   onTurnBoundary: () => void;
 }) {
   const [quiet, setQuiet] = useState(false);
-  const lastAudibleAt = useRef(Date.now());
+  const lastAudibleAt = useRef(0);
   const levelRef = useRef(level);
   const hasMeteringRef = useRef(hasMetering);
   const onAutoStopRef = useRef(onAutoStop);
@@ -49,15 +49,17 @@ export function useSilenceMonitor({
   const autoStopped = useRef(false);
   const heardSpeech = useRef(false);
   const turnEnded = useRef(false);
-  const recordingStartedAt = useRef(Date.now());
+  const recordingStartedAt = useRef(0);
   const noiseFloor = useRef(0);
   const calibrationTotal = useRef(0);
   const calibrationSamples = useRef(0);
 
-  levelRef.current = level;
-  hasMeteringRef.current = hasMetering;
-  onAutoStopRef.current = onAutoStop;
-  onTurnBoundaryRef.current = onTurnBoundary;
+  useEffect(() => {
+    levelRef.current = level;
+    hasMeteringRef.current = hasMetering;
+    onAutoStopRef.current = onAutoStop;
+    onTurnBoundaryRef.current = onTurnBoundary;
+  }, [hasMetering, level, onAutoStop, onTurnBoundary]);
 
   useEffect(() => {
     if (!active) {
@@ -69,7 +71,6 @@ export function useSilenceMonitor({
       noiseFloor.current = 0;
       calibrationTotal.current = 0;
       calibrationSamples.current = 0;
-      setQuiet(false);
       return;
     }
 

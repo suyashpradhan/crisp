@@ -20,8 +20,10 @@ The successful response is `{ transcript, translation, operations, languageCode,
 
 Errors use `{ error: { code, message, retryable } }`. Rate limits return HTTP 429 with `retryable: true` and forward a valid `Retry-After` value; provider availability failures are retryable. Invalid, empty, oversized, and unsupported audio are not retried automatically.
 
-## Client integration and boundary
+## File-capture client integration and boundary
 
-The continuous-capture client submits each retained turn with its current draft references. Sarvam chat may propose operations, but Zod validates those operations and the deterministic reducer applies them only to temporary session drafts before automatic commit. A transcript or operation error commits nothing.
+The retained-file client submits each completed short turn with its current draft references. Sarvam chat may propose operations, but Zod validates those operations and the deterministic reducer applies them only to temporary session drafts before automatic commit. A transcript or operation error commits nothing.
 
 The client uses same-origin `/api/transcribe` by default only on web. For a deployed native build, `EXPO_PUBLIC_TRANSCRIPTION_API_URL` is mandatory and contains only the public endpoint, not a secret. The Sarvam key remains server-only. Retryable provider and network errors preserve the recording and session and offer an inline retry; successful commit clears the in-memory recording and cleans up the native retained file.
+
+For gap-free capture, use the secure WebSocket relay described in [LIVE_CAPTURE.md](LIVE_CAPTURE.md). It supersedes this route only when all live-capture public configuration values are present; otherwise this file route remains the safe fallback.

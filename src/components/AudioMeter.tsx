@@ -36,11 +36,12 @@ export function AudioMeter({ active, level, prominent = false, reduceMotion = fa
 function useSmoothedLevel(active: boolean, level: number, reduceMotion: boolean) {
   const [current, setCurrent] = useState(0);
   const target = useRef(0);
-  target.current = Math.max(0, Math.min(1, level));
+  useEffect(() => {
+    target.current = Math.max(0, Math.min(1, level));
+  }, [level]);
 
   useEffect(() => {
     if (!active) {
-      setCurrent(0);
       return;
     }
 

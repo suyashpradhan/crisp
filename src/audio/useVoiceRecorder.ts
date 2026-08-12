@@ -31,11 +31,14 @@ export function useVoiceRecorder() {
 
   useEffect(() => {
     if (recorderState.mediaServicesDidReset) {
-      setError({
-        code: "recording_unavailable",
-        message: "The microphone was interrupted. Start a new recording when you’re ready.",
-        title: "Crisp stopped listening",
-      });
+      const timeout = setTimeout(() => {
+        setError({
+          code: "recording_unavailable",
+          message: "The microphone was interrupted. Start a new recording when you’re ready.",
+          title: "Crisp stopped listening",
+        });
+      }, 0);
+      return () => clearTimeout(timeout);
     }
   }, [recorderState.mediaServicesDidReset]);
 

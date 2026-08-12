@@ -38,6 +38,7 @@ import { taskStore } from "@/src/storage/taskStore";
 import { sessionStore } from "@/src/storage/sessionStore";
 import { TranscriptionClientError, transcribeRecording } from "@/src/transcription/client";
 import { useTaskSync } from "@/src/sync/useTaskSync";
+import { useLiveVoiceStream } from "@/src/live/useLiveVoiceStream";
 
 const navItems: { label: string; view: AppView }[] = [
   { label: "Today", view: "today" },
@@ -59,7 +60,10 @@ export function CrispApp() {
   const beginOrStopRecordingRef = useRef<() => void>(() => undefined);
   const stopRecordingRef = useRef<() => void>(() => undefined);
   const voiceRecorder = useVoiceRecorder();
-  voiceRecorderRef.current = voiceRecorder;
+  const liveVoice = useLiveVoiceStream({
+    onFailure: (failure) => dispatch({ message: failure.message, type: "recordingFailed" }),
+    onTurn: (turn) => dispatch({ operations: turn.operations, transcript: turn.transcript, type: "turnProcessed" }),
+  });
   const [fontsLoaded] = useFonts({
     InstrumentSans_400Regular,
     InstrumentSans_500Medium,
@@ -77,12 +81,20 @@ export function CrispApp() {
     : isTablet
       ? layout.tabletGutter
       : layout.mobileGutter;
+  const usingLiveVoice = liveVoice.available;
+  const { isStreaming: isLiveStreaming, stop: stopLiveVoice, updateSession: updateLiveSession } = liveVoice;
+  const activeMetering = usingLiveVoice ? liveVoice.metering : voiceRecorder.metering;
+  const hasActiveMetering = usingLiveVoice ? liveVoice.hasMetering : voiceRecorder.hasMetering;
+  const activeCaptureError = usingLiveVoice ? liveVoice.error : voiceRecorder.error;
+  const captureActionLabel = activeCaptureError && "actionLabel" in activeCaptureError
+    ? activeCaptureError.actionLabel
+    : undefined;
   const silence = useSilenceMonitor({
     active: isRecording,
-    hasMetering: voiceRecorder.hasMetering,
-    level: voiceRecorder.metering,
+    hasMetering: hasActiveMetering,
+    level: activeMetering,
     onAutoStop: () => { void commitAfterIdle(); },
-    onTurnBoundary: () => { void stopCurrentTurn(); },
+    onTurnBoundary: usingLiveVoice ? () => undefined : () => { void stopCurrentTurn(); },
   });
   useTaskSync(state.tasks, (tasks) => dispatch({ tasks, type: "replaceTasks" }));
 
@@ -109,6 +121,20 @@ export function CrispApp() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isRecording]);
+
+  useEffect(() => {
+    voiceRecorderRef.current = voiceRecorder;
+  }, [voiceRecorder]);
+
+  useEffect(() => {
+    if (isRecording && state.session && isLiveStreaming) {
+      updateLiveSession(state.session);
+    }
+  }, [isLiveStreaming, isRecording, state.session, updateLiveSession]);
+
+  useEffect(() => {
+    if (state.sessionStatus === "failed" && isLiveStreaming) stopLiveVoice();
+  }, [isLiveStreaming, state.sessionStatus, stopLiveVoice]);
 
   useEffect(() => {
     let active = true;
@@ -222,6 +248,12 @@ export function CrispApp() {
   async function commitAfterIdle() {
     if (captureBusy || !isRecording) return;
     setCaptureBusy(true);
+    if (usingLiveVoice) {
+      liveVoice.stop();
+      dispatch({ committedAt: Date.now(), type: "commitLiveSession" });
+      setCaptureBusy(false);
+      return;
+    }
     const result = await voiceRecorder.stop();
     if (result.ok) {
       discardRetainedRecording(result.recording);
@@ -237,11 +269,23 @@ export function CrispApp() {
     Keyboard.dismiss();
     if (state.lastRecording) discardRetainedRecording(state.lastRecording);
     setCaptureBusy(true);
+    const id = `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    if (usingLiveVoice) {
+      const result = await liveVoice.start({ draftTasks: [], id });
+      if (result.ok) {
+        recordingStarted();
+        dispatch({ id, startedAt: Date.now(), type: "startSession" });
+      } else {
+        dispatch({ message: result.error.message, type: "recordingFailed" });
+      }
+      setCaptureBusy(false);
+      return;
+    }
     const result = await voiceRecorder.start();
     if (result.ok) {
       recordingStarted();
       dispatch({
-        id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        id,
         startedAt: Date.now(),
         type: "startSession",
       });
@@ -257,13 +301,16 @@ export function CrispApp() {
   }
 
   function startFreshAfterFailure() {
+    liveVoice.stop();
     if (state.lastRecording) discardRetainedRecording(state.lastRecording);
     dispatch({ type: "discardSession" });
     void beginRecording();
   }
 
-  beginOrStopRecordingRef.current = () => { void beginRecording(); };
-  stopRecordingRef.current = () => { void commitAfterIdle(); };
+  useEffect(() => {
+    beginOrStopRecordingRef.current = () => { void beginRecording(); };
+    stopRecordingRef.current = () => { void commitAfterIdle(); };
+  });
 
   if (!fontsLoaded || !state.isHydrated) {
     return <View style={styles.loading} />;
@@ -362,9 +409,9 @@ export function CrispApp() {
                 <Pressable onPress={() => dispatch({ type: "retryProcessing" })} style={styles.captureErrorAction}>
                   <Text style={styles.captureErrorActionText}>Try again</Text>
                 </Pressable>
-              ) : voiceRecorder.error?.actionLabel ? (
+              ) : captureActionLabel ? (
                 <Pressable onPress={() => void Linking.openSettings()} style={styles.captureErrorAction}>
-                  <Text style={styles.captureErrorActionText}>{voiceRecorder.error.actionLabel}</Text>
+                  <Text style={styles.captureErrorActionText}>{captureActionLabel}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -373,13 +420,13 @@ export function CrispApp() {
             {inSession ? (
               <AudioMeter
                 active={isRecording}
-                level={voiceRecorder.metering}
+                level={activeMetering}
                 prominent
                 reduceMotion={reduceMotion}
               />
             ) : null}
             <RecordingButton
-              level={voiceRecorder.metering}
+              level={activeMetering}
               onPress={state.sessionStatus === "failed"
                 ? startFreshAfterFailure
                 : isRecording

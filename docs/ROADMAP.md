@@ -34,6 +34,6 @@ Supabase task replication, merge-by-`updated_at`, persisted auth sessions, and a
 
 Finish responsive web polish, landing page, privacy work, analytics, production builds, and release QA.
 
-## Milestone 8 — Continuous capture (in progress)
+## Milestone 8 — Continuous capture (implementation complete; deployment pending)
 
-Automatic pause-delimited turns, temporary live session cards, automatic quiet-time commit, multilingual Sarvam transcription, and server-side structured interpretation are implemented. The current Expo SDK records each natural turn as a short file, so a brief processing gap remains between thoughts. Upgrade to an Expo Audio release with PCM `useAudioStream` and add a server-side Sarvam WebSocket relay before claiming gap-free streaming transcription.
+Expo SDK 57 provides native PCM microphone streaming and web uses a matching Web Audio adapter. The configuration-gated client maintains one microphone stream and sends audio to a Supabase Edge Function, which securely relays to Sarvam WebSocket STT, serializes finalized turns, and returns validated operations for active-session cards. It reconnects through a future recovery task if needed; it does not silently persist audio. The previous retained-file flow remains available until the public Supabase configuration, anonymous auth, Edge Function secret, and deployment listed in [`LIVE_CAPTURE.md`](LIVE_CAPTURE.md) are complete.

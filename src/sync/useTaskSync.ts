@@ -13,8 +13,11 @@ export function useTaskSync(tasks: Task[], onRemoteTasks: (tasks: Task[]) => voi
   const userId = useRef<string | null>(null);
   const fingerprint = useRef("");
   const onRemoteTasksRef = useRef(onRemoteTasks);
-  onRemoteTasksRef.current = onRemoteTasks;
   const client = getSupabaseClient();
+
+  useEffect(() => {
+    onRemoteTasksRef.current = onRemoteTasks;
+  }, [onRemoteTasks]);
 
   useEffect(() => {
     if (!client) return;
