@@ -134,6 +134,7 @@ Deno.serve(async (request) => {
           originalTurns.push(turn);
           void processPairs();
         },
+        reportUpstreamFormatError,
       );
       translationSocket = await openSarvamSocket(
         "translate",
@@ -142,6 +143,7 @@ Deno.serve(async (request) => {
           translationTurns.push(turn);
           void processPairs();
         },
+        reportUpstreamFormatError,
       );
       if (closed) {
         originalSocket.close();
@@ -193,7 +195,9 @@ Deno.serve(async (request) => {
     const payload = JSON.stringify({
       audio: {
         data: message.data.audio,
-        encoding: "pcm_s16le",
+        // Sarvam's stream contract uses this message-level label even when
+        // `input_audio_codec=pcm_s16le` declares raw PCM in the handshake.
+        encoding: "audio/wav",
         sample_rate: 16000,
       },
     });
@@ -202,6 +206,11 @@ Deno.serve(async (request) => {
   };
   client.onerror = () => close();
   client.onclose = () => close();
+
+  function reportUpstreamFormatError() {
+    fail("Live transcription rejected the audio stream. Update the relay and try again.", false);
+    close();
+  }
 
   async function processPairs() {
     while (originalTurns.length > 0 && translationTurns.length > 0) {
@@ -308,6 +317,7 @@ function openSarvamSocket(
   mode: SarvamMode,
   apiKey: string,
   onTurn: (turn: SarvamTurn) => void,
+  onStreamError: () => void,
 ) {
   return new Promise<WebSocket>((resolve, reject) => {
     const url = new URL(sarvamWebSocketUrl);
@@ -316,6 +326,7 @@ function openSarvamSocket(
     url.searchParams.set("mode", mode);
     url.searchParams.set("model", "saaras:v4");
     url.searchParams.set("sample_rate", "16000");
+    url.searchParams.set("high_vad_sensitivity", "true");
     url.searchParams.set("vad_signals", "true");
     const socket = new WebSocket(url, {
       headers: { "api-subscription-key": apiKey },
@@ -323,10 +334,20 @@ function openSarvamSocket(
     socket.once("open", () => resolve(socket));
     socket.once("error", reject);
     socket.on("message", (data) => {
-      const turn = readSarvamTurn(data.toString());
+      const message = data.toString();
+      if (isSarvamStreamError(message)) {
+        onStreamError();
+        return;
+      }
+      const turn = readSarvamTurn(message);
       if (turn) onTurn(turn);
     });
   });
+}
+
+function isSarvamStreamError(value: string) {
+  const parsed = parseJson(value) as { type?: unknown } | undefined;
+  return parsed?.type === "error";
 }
 
 type SarvamTurn = {
